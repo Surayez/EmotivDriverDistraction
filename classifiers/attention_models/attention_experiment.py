@@ -72,9 +72,10 @@ def build_model(input_shape):
     gap_layerX = keras.layers.GlobalAveragePooling1D()(output_block_3)
     print(gap_layerX)
 
-    # output_layer = keras.layers.Dense(n_feature_maps, activation='relu')(lstm_layer)
+    # output_layer = keras.layers.Dense(n_feature_maps, activation='relu')(output_block_3)
     # output_layer = keras.layers.Dense(2, activation='softmax')(output_layer)
-    #
+    # print(output_layer)
+
     # model = keras.models.Model(inputs=main_input, outputs=output_layer)
 
     cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layerX))(main_input)
@@ -86,9 +87,14 @@ def build_model(input_shape):
     output_train = keras.layers.Input(output_shape)
 
     # ENCODER [Encodes input to hidden states]
-    encoder_stack_h, encoder_last_h, encoder_last_c = keras.layers.LSTM(n_hidden, activation='softmax',
+    encoder_stack_h, encoder_last_h, encoder_last_c = keras.layers.LSTM(n_hidden, activation='sigmoid',
                                                                         return_state=True,
                                                                         return_sequences=True)(cnn_model)
+
+    encoder_stack_h, encoder_last_h, encoder_last_c, x, y = keras.layers.Bidirectional(keras.layers.LSTM(n_hidden, activation='sigmoid',
+                                                                        return_state=True,
+                                                                        return_sequences=True))(cnn_model)
+
     # Returns hidden state stacks and last hidden states
     print(encoder_stack_h)
     print(encoder_last_h)
@@ -105,10 +111,14 @@ def build_model(input_shape):
     print(decoder_input)
 
     # DECODER [Decodes the last encoded hidden state to get alignment scoring]
-    decoder_stack_h = keras.layers.LSTM(n_hidden, activation='softmax',
-                                        return_state=False, return_sequences=True)(decoder_input,
-                                                                                   initial_state=[encoder_last_h,
-                                                                                                  encoder_last_c])
+    # decoder_stack_h = keras.layers.LSTM(n_hidden, activation='sigmoid',
+    #                                     return_state=False, return_sequences=True)(decoder_input,
+    #                                                                                initial_state=[encoder_last_h,
+    #                                                                                               encoder_last_c])
+
+    decoder_stack_h = keras.layers.Bidirectional(keras.layers.LSTM(n_hidden, activation='sigmoid',
+                                        return_state=False, return_sequences=True))(decoder_input)
+
     print(decoder_stack_h)
 
     # ATTENTION LAYER
@@ -148,112 +158,6 @@ def build_model(input_shape):
     return model
 
 
-def second_model():
-
-    n_feature_maps = 64
-
-    main_input = keras.layers.Input(input_shape)
-    input_layer = keras.layers.Input((input_shape[1], input_shape[2]))
-
-    # add model layers
-    # BLOCK 1
-    conv_x = keras.layers.Conv1D(filters=n_feature_maps,
-                                 kernel_size=8,
-                                 padding='same')(input_layer)
-    conv_x = keras.layers.normalization.BatchNormalization()(conv_x)
-    conv_x = keras.layers.Activation('relu')(conv_x)
-
-    conv_y = keras.layers.Conv1D(filters=n_feature_maps,
-                                 kernel_size=5,
-                                 padding='same')(conv_x)
-    conv_y = keras.layers.normalization.BatchNormalization()(conv_y)
-    conv_y = keras.layers.Activation('relu')(conv_y)
-
-    conv_z = keras.layers.Conv1D(filters=n_feature_maps,
-                                 kernel_size=3,
-                                 padding='same')(conv_y)
-    conv_z = keras.layers.normalization.BatchNormalization()(conv_z)
-
-    # expand channels for the sum
-    shortcut_y = keras.layers.Conv1D(filters=n_feature_maps,
-                                     kernel_size=1,
-                                     padding='same')(input_layer)
-    shortcut_y = keras.layers.normalization.BatchNormalization()(shortcut_y)
-
-    output_block_1 = keras.layers.add([shortcut_y, conv_z])
-    output_block_1 = keras.layers.Activation('relu')(output_block_1)
-
-    # BLOCK 2
-    conv_x = keras.layers.Conv1D(filters=n_feature_maps * 2,
-                                 kernel_size=8,
-                                 padding='same')(output_block_1)
-    conv_x = keras.layers.normalization.BatchNormalization()(conv_x)
-    conv_x = keras.layers.Activation('relu')(conv_x)
-
-    conv_y = keras.layers.Conv1D(filters=n_feature_maps * 2,
-                                 kernel_size=5,
-                                 padding='same')(conv_x)
-    conv_y = keras.layers.normalization.BatchNormalization()(conv_y)
-    conv_y = keras.layers.Activation('relu')(conv_y)
-
-    conv_z = keras.layers.Conv1D(filters=n_feature_maps * 2,
-                                 kernel_size=3,
-                                 padding='same')(conv_y)
-    conv_z = keras.layers.normalization.BatchNormalization()(conv_z)
-
-    # expand channels for the sum
-    shortcut_y = keras.layers.Conv1D(filters=n_feature_maps * 2,
-                                     kernel_size=1,
-                                     padding='same')(output_block_1)
-    shortcut_y = keras.layers.normalization.BatchNormalization()(shortcut_y)
-
-    output_block_2 = keras.layers.add([shortcut_y, conv_z])
-    output_block_2 = keras.layers.Activation('relu')(output_block_2)
-
-    # BLOCK 3
-
-    conv_x = keras.layers.Conv1D(filters=n_feature_maps * 2,
-                                 kernel_size=8,
-                                 padding='same')(output_block_2)
-    conv_x = keras.layers.normalization.BatchNormalization()(conv_x)
-    conv_x = keras.layers.Activation('relu')(conv_x)
-
-    conv_y = keras.layers.Conv1D(filters=n_feature_maps * 2,
-                                 kernel_size=5,
-                                 padding='same')(conv_x)
-    conv_y = keras.layers.normalization.BatchNormalization()(conv_y)
-    conv_y = keras.layers.Activation('relu')(conv_y)
-
-    conv_z = keras.layers.Conv1D(filters=n_feature_maps * 2,
-                                 kernel_size=3,
-                                 padding='same')(conv_y)
-    conv_z = keras.layers.normalization.BatchNormalization()(conv_z)
-
-    # no need to expand channels because they are equal
-    shortcut_y = keras.layers.normalization.BatchNormalization()(output_block_2)
-
-    output_block_3 = keras.layers.add([shortcut_y, conv_z])
-    output_block_3 = keras.layers.Activation('relu')(output_block_3)
-    print(output_block_3)
-
-    # FINAL
-    gap_layer = keras.layers.GlobalAveragePooling1D()(output_block_3)
-    print(gap_layer)
-
-    cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layer))(main_input)
-    print(cnn_model)
-
-    lstm_layer = keras.layers.LSTM(n_feature_maps, return_sequences=True)(cnn_model)
-    lstm_layer = keras.layers.LSTM(n_feature_maps)(lstm_layer)
-
-    output_layer = keras.layers.Dense(n_feature_maps, activation='relu')(lstm_layer)
-    output_layer = keras.layers.Dense(2, activation='softmax')(output_layer)
-
-    model = keras.models.Model(inputs=main_input, outputs=output_layer)
-    model.summary()
-
 if __name__ == "__main__":
     input_shape = (None, 40, 266)
     attn_model = build_model(input_shape)
-    input_shape = (None, 40, 266)
-    # second_model()

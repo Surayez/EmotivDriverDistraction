@@ -88,6 +88,8 @@ def build_model(input_shape):
     encoder_stack_h, encoder_last_h, encoder_last_c = keras.layers.LSTM(n_hidden, activation='relu',
                                                                         return_state=True,
                                                                         return_sequences=True)(cnn_model)
+
+
     # Returns hidden state stacks and last hidden states
     print(encoder_stack_h)
     print(encoder_last_h)
