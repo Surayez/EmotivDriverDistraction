@@ -9,7 +9,6 @@ __author__ = "Surayez Rahman"
 def build_model(input_shape):
 
     nb_classes = 2
-    input_shape = (40, 266)
     output_shape = (40, 2)
 
     n_feature_maps = 64
