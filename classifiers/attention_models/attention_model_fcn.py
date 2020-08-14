@@ -8,7 +8,8 @@ __author__ = "Surayez Rahman"
 
 def build_model(input_shape):
     n_feature_maps = 64
-    input_layer = keras.layers.Input(input_shape)
+    main_input = keras.layers.Input(input_shape)
+    input_layer = keras.layers.Input((input_shape[1], input_shape[2]))
 
     conv1 = keras.layers.Conv1D(filters=128, kernel_size=8, padding='same')(input_layer)
     conv1 = keras.layers.normalization.BatchNormalization()(conv1)
@@ -22,6 +23,12 @@ def build_model(input_shape):
     conv3 = keras.layers.normalization.BatchNormalization()(conv3)
     conv3 = keras.layers.Activation('relu')(conv3)
 
+    gap_layerX = keras.layers.GlobalAveragePooling1D()(conv3)
+    print(gap_layerX)
+
+    cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layerX))(main_input)
+    print(cnn_model)
+
     # ATTENTION BLOCK STARTS
 
     output_shape = (2)
@@ -30,7 +37,7 @@ def build_model(input_shape):
     # ENCODER [Encodes input to hidden states]
     encoder_stack_h, encoder_last_h, encoder_last_c = keras.layers.LSTM(n_feature_maps, activation='relu',
                                                                         return_state=True,
-                                                                        return_sequences=True)(conv3)
+                                                                        return_sequences=True)(cnn_model)
     # Returns hidden state stacks and last hidden states
     print(encoder_stack_h)
     print(encoder_last_h)
@@ -79,7 +86,7 @@ def build_model(input_shape):
 
     # gap_layer = keras.layers.GlobalAveragePooling1D()(out)
 
-    model = keras.models.Model(inputs=input_layer, outputs=out)
+    model = keras.models.Model(inputs=main_input, outputs=out)
     model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
     model.summary()
 
@@ -87,5 +94,5 @@ def build_model(input_shape):
 
 
 if __name__ == "__main__":
-    input_shape = (40, 266)
+    input_shape = (None, 40, 266)
     attn_model = build_model(input_shape)
