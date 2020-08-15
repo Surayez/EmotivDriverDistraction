@@ -146,15 +146,6 @@ def build_model(input_shape):
     model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
     model.summary()
 
-    # lstm_layer = keras.layers.LSTM(n_feature_maps, return_sequences=True)(cnn_model)
-    # lstm_layer = keras.layers.LSTM(n_feature_maps)(lstm_layer)
-    #
-    # output_layer = keras.layers.Dense(n_feature_maps, activation='relu')(lstm_layer)
-    # output_layer = keras.layers.Dense(2, activation='softmax')(output_layer)
-    #
-    # model = keras.models.Model(inputs=main_input, outputs=output_layer)
-    # model.summary()
-
     return model
 
 

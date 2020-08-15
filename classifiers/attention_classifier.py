@@ -3,7 +3,7 @@ import keras
 from classifiers.classifiers import predict_model_deep_learning
 from utils.tools import save_logs
 from classifiers.attention_models import attention_model, attention_model_fcn, attention_model_resnet, \
-    attention_experiment
+    attention_experiment, attention_model_bidirectional
 
 __author__ = "Chang Wei Tan & Surayez Rahman"
 
@@ -16,7 +16,7 @@ class Classifier_Attention:
         self.output_directory = output_directory
 
         # UPDATE the following line to use desired model
-        self.model = attention_experiment.build_model(input_shape)
+        self.model = attention_model_bidirectional.build_model(input_shape)
 
         if verbose:
             self.model.summary()
@@ -27,7 +27,7 @@ class Classifier_Attention:
 
         if self.verbose:
             print('[Attention] Training Attention Classifier')
-        epochs = 10
+        epochs = 3
         batch_size = 16
         mini_batch_size = int(min(Ximg_train.shape[0] / 10, batch_size))
 
