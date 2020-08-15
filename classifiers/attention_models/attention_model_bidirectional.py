@@ -2,9 +2,6 @@ import keras
 
 __author__ = "Surayez Rahman"
 
-# ResNet code here are taken from https://github.com/hfawaz/dl-4-tsc. Attention code taken from:
-# https://levelup.gitconnected.com/building-seq2seq-lstm-with-luong-attention-in-keras-for-time-series-forecasting-1ee00958decb
-
 
 def build_model(input_shape):
     n_feature_maps = 64
@@ -33,7 +30,6 @@ def build_model(input_shape):
     output_block_1 = keras.layers.Activation('relu')(output_block_1)
 
     # BLOCK 2
-
     conv_x = keras.layers.Conv1D(filters=n_feature_maps * 2, kernel_size=8, padding='same')(output_block_1)
     conv_x = keras.layers.normalization.BatchNormalization()(conv_x)
     conv_x = keras.layers.Activation('relu')(conv_x)
@@ -85,10 +81,9 @@ def build_model(input_shape):
     output_train = keras.layers.Input(output_shape)
 
     # ENCODER [Encodes input to hidden states]
-    encoder_stack_h, encoder_last_h, encoder_last_c = keras.layers.LSTM(n_hidden, activation='relu',
+    encoder_stack_h, encoder_last_h, encoder_last_c, x, y = keras.layers.Bidirectional(keras.layers.LSTM(n_hidden, activation='sigmoid',
                                                                         return_state=True,
-                                                                        return_sequences=True)(cnn_model)
-
+                                                                        return_sequences=True))(cnn_model)
 
     # Returns hidden state stacks and last hidden states
     print(encoder_stack_h)
@@ -106,10 +101,8 @@ def build_model(input_shape):
     print(decoder_input)
 
     # DECODER [Decodes the last encoded hidden state to get alignment scoring]
-    decoder_stack_h = keras.layers.LSTM(n_hidden, activation='relu',
-                                        return_state=False, return_sequences=True)(decoder_input,
-                                                                                   initial_state=[encoder_last_h,
-                                                                                                  encoder_last_c])
+    decoder_stack_h = keras.layers.Bidirectional(keras.layers.LSTM(n_hidden, activation='sigmoid',
+                                        return_state=False, return_sequences=True))(decoder_input)
     print(decoder_stack_h)
 
     # ATTENTION LAYER
@@ -138,7 +131,6 @@ def build_model(input_shape):
     model.summary()
 
     return model
-
 
 
 if __name__ == "__main__":
