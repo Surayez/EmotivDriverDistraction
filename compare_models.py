@@ -174,11 +174,13 @@ for classifier_name in classifier_names:
     np.savetxt(output_directory + 'confusion_matrix.csv', conf_mat, delimiter=",")
 
 
-train = "Train: " + str(result_train)
-test = "Test: " + str(result_test)
-val = "Val: " + str(result_val)
+models = str(classifier_names) + '\n'
+train = "Train: " + str(result_train) + '\n'
+test = "Test: " + str(result_test) + '\n'
+val = "Val: " + str(result_val) + '\n'
 
 f = open('results.txt', 'w')
+f.write(models)
 f.write(train)
 f.write(test)
 f.write(val)
