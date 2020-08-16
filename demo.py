@@ -14,15 +14,16 @@ pd.set_option('display.max_columns', 500)
 __author__ = "Chang Wei Tan"
 
 
-def fit_classifier(all_labels, X_train, y_train, X_val=None, y_val=None):
+def fit_classifier(epoch, all_labels, X_train, y_train, X_val=None, y_val=None):
     nb_classes = len(np.unique(all_labels))
 
-    if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or (classifier_name == "attention_3"):
+    if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or ("attention" in classifier_name):
         input_shape = (None, X_train.shape[2], X_train.shape[3])
     else:
         input_shape = (X_train.shape[1], X_train.shape[2])
 
-    classifier = create_classifier(classifier_name, input_shape, nb_classes)
+
+    classifier = create_classifier(classifier_name, input_shape, nb_classes, epoch)
     if X_val is None:
         classifier.fit(X_train, y_train)
     else:
@@ -31,36 +32,19 @@ def fit_classifier(all_labels, X_train, y_train, X_val=None, y_val=None):
     return classifier
 
 
-
-def fit_attn_classifier(X_train, y_train, X_val=None, y_val=None):
-    from classifiers import attention_trend
-    input_shape = (X_train.shape[1], X_train.shape[2])
-    classifier = attention_trend.Classifier_Attention_Trend(output_directory, input_shape, True)
-
-    if X_val is None:
-        classifier.fit(X_train, y_train)
-    else:
-        classifier.fit(X_train, y_train, X_val, y_val)
-
-    return classifier
-
-
-def create_classifier(classifier_name, input_shape, nb_classes, verbose=True):
-    if classifier_name == 'attention':
+def create_classifier(classifier_name, input_shape, nb_classes, epoch, verbose=True):
+    # if classifier_name == 'attention_trend':
+    #     from classifiers import attention_trend
+    #     return attention_trend.Classifier_Attention_Trend(output_directory, input_shape, verbose)
+    if "attention" in classifier_name:
         from classifiers import attention_classifier
-        return attention_classifier.Classifier_Attention(output_directory, input_shape, verbose)
-    if classifier_name == 'attention_trend':
-        from classifiers import attention_trend
-        return attention_trend.Classifier_Attention_Trend(output_directory, input_shape, verbose)
-    if classifier_name == 'attention_3':
-        from classifiers import attention_classifier
-        return attention_classifier.Classifier_Attention(output_directory, input_shape, verbose)
+        return attention_classifier.Classifier_Attention(classifier_name, output_directory, input_shape, epoch, verbose)
     if classifier_name == 'resnet':
         from classifiers import resnet
-        return resnet.Classifier_ResNet(output_directory, input_shape, nb_classes, verbose)
+        return resnet.Classifier_ResNet(output_directory, input_shape, nb_classes, epoch, verbose)
     if classifier_name == "fcn":
         from classifiers import fcn
-        return fcn.Classifier_FCN(output_directory, input_shape, nb_classes, verbose)
+        return fcn.Classifier_FCN(output_directory, input_shape, nb_classes, epoch, verbose)
     if classifier_name == "cnn":
         from classifiers import cnn
         return cnn.Classifier_CNN(output_directory, input_shape, nb_classes, verbose)
@@ -69,11 +53,10 @@ def create_classifier(classifier_name, input_shape, nb_classes, verbose=True):
         return cnn_lstm.Classifier_CNN_LSTM(output_directory, input_shape, nb_classes, verbose)
     if classifier_name == "fcn_lstm":
         from classifiers import fcn_lstm
-        return fcn_lstm.Classifier_FCN_LSTM(output_directory, input_shape, nb_classes, verbose)
+        return fcn_lstm.Classifier_FCN_LSTM(output_directory, input_shape, nb_classes, epoch, verbose)
     if classifier_name == "resnet_lstm":
         from classifiers import resnet_lstm
-        return resnet_lstm.Classifier_ResNet_LSTM(output_directory, input_shape, nb_classes, verbose)
-
+        return resnet_lstm.Classifier_ResNet_LSTM(output_directory, input_shape, nb_classes, epoch, verbose)
     if classifier_name == "rocket":
         from classifiers import rocket
         return rocket.Classifier_Rocket(output_directory, input_shape, nb_classes, verbose)
@@ -82,10 +65,11 @@ def create_classifier(classifier_name, input_shape, nb_classes, verbose=True):
 data_path = "/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/TS_Segmentation/"
 output_directory = '/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/'
 problem = "Emotiv266"
-classifier_name = "resnet_lstm"
+classifier_name = "attention_bidirectional"
 window_len = 40
 stride = 20
 binary = True
+epoch = 3
 
 output_directory = output_directory + classifier_name + '/' + problem + '/'
 create_directory(output_directory)
@@ -125,7 +109,7 @@ if classifier_name == "rocket":
     all_labels = np.concatenate((y_train, y_test), axis=0)
     print("[Demo] All labels: {}".format(np.unique(all_labels)))
 
-    classifier = fit_classifier(all_labels, X_train, y_train)
+    classifier = fit_classifier(epoch, all_labels, X_train, y_train)
 
     metrics_train, _ = classifier.predict(X_train, y_train)
     metrics_test, conf_mat = classifier.predict(X_test, y_test)
@@ -144,7 +128,7 @@ else:
                                                                                  stride=stride,
                                                                                  binary=binary)
     else:
-        if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or (classifier_name == "attention_3"):
+        if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or ("attention" in classifier_name):
             X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
                                                                                      test_inputs=test_data,
                                                                                      window_len=window_len,
@@ -162,49 +146,49 @@ else:
         print("[Demo] Val series:", X_val.shape)
     print("[Demo] Test series", X_test.shape)
 
-
-    if (classifier_name == "attention_trend"):
-        attn_classifier = fit_attn_classifier(X_train, y_train, X_val, y_val)
-
-        metrics_train, _ = attn_classifier.predict(X_train, y_train)
-        metrics_val, _ = attn_classifier.predict(X_val, y_val)
-        metrics_test, conf_mat = attn_classifier.predict(X_test, y_test)
-
-        metrics_train['train/val/test'] = 'train'
-        metrics_val['train/val/test'] = 'val'
-        metrics_test['train/val/test'] = 'test'
-
-        metrics = pd.concat([metrics_train, metrics_val, metrics_test]).reset_index(drop=True)
-
-        print(metrics.head())
-
-
+    #
+    # if (classifier_name == "attention_trend"):
+    #     # attn_classifier = fit_attn_classifier(X_train, y_train, X_val, y_val)
+    #
+    #     metrics_train, _ = attn_classifier.predict(X_train, y_train)
+    #     metrics_val, _ = attn_classifier.predict(X_val, y_val)
+    #     metrics_test, conf_mat = attn_classifier.predict(X_test, y_test)
+    #
+    #     metrics_train['train/val/test'] = 'train'
+    #     metrics_val['train/val/test'] = 'val'
+    #     metrics_test['train/val/test'] = 'test'
+    #
+    #     metrics = pd.concat([metrics_train, metrics_val, metrics_test]).reset_index(drop=True)
+    #
+    #     print(metrics.head())
+    #
+    #
+    # else:
+    if y_val is not None:
+        all_labels = np.concatenate((y_train, y_val, y_test), axis=0)
     else:
-        if y_val is not None:
-            all_labels = np.concatenate((y_train, y_val, y_test), axis=0)
-        else:
-            all_labels = np.concatenate((y_train, y_test), axis=0)
-        print("[Demo] All labels: {}".format(np.unique(all_labels)))
+        all_labels = np.concatenate((y_train, y_test), axis=0)
+    print("[Demo] All labels: {}".format(np.unique(all_labels)))
 
-        tmp = pd.get_dummies(all_labels).values
+    tmp = pd.get_dummies(all_labels).values
 
-        y_train = tmp[:len(y_train)]
-        y_val = tmp[len(y_train):len(y_train) + len(y_val)]
-        y_test = tmp[len(y_train) + len(y_val):]
+    y_train = tmp[:len(y_train)]
+    y_val = tmp[len(y_train):len(y_train) + len(y_val)]
+    y_test = tmp[len(y_train) + len(y_val):]
 
-        classifier = fit_classifier(all_labels, X_train, y_train, X_val, y_val)
+    classifier = fit_classifier(epoch, all_labels, X_train, y_train, X_val, y_val)
 
-        metrics_train, _ = classifier.predict(X_train, y_train)
-        metrics_val, _ = classifier.predict(X_val, y_val)
-        metrics_test, conf_mat = classifier.predict(X_test, y_test)
+    metrics_train, _ = classifier.predict(X_train, y_train)
+    metrics_val, _ = classifier.predict(X_val, y_val)
+    metrics_test, conf_mat = classifier.predict(X_test, y_test)
 
-        metrics_train['train/val/test'] = 'train'
-        metrics_val['train/val/test'] = 'val'
-        metrics_test['train/val/test'] = 'test'
+    metrics_train['train/val/test'] = 'train'
+    metrics_val['train/val/test'] = 'val'
+    metrics_test['train/val/test'] = 'test'
 
-        metrics = pd.concat([metrics_train, metrics_val, metrics_test]).reset_index(drop=True)
+    metrics = pd.concat([metrics_train, metrics_val, metrics_test]).reset_index(drop=True)
 
-        print(metrics.head())
+    print(metrics.head())
 
 metrics.to_csv(output_directory + 'classification_metrics.csv')
 np.savetxt(output_directory + 'confusion_matrix.csv', conf_mat, delimiter=",")

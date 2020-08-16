@@ -13,7 +13,7 @@ __author__ = "Chang Wei Tan"
 
 
 class Classifier_FCN_LSTM:
-    def __init__(self, output_directory, input_shape, nb_classes, verbose=False, dropout_rate=0.3):
+    def __init__(self, output_directory, input_shape, nb_classes, epoch, verbose=False, dropout_rate=0.3):
         if verbose:
             print('[FCN-LSTM] Creating FCN-LSTM Classifier')
 
@@ -21,6 +21,7 @@ class Classifier_FCN_LSTM:
         self.dropout_rate = dropout_rate
         self.output_directory = output_directory
         self.model = self.build_model(input_shape, nb_classes)
+        self.epoch = epoch
         if verbose:
             self.model.summary()
 
@@ -60,7 +61,7 @@ class Classifier_FCN_LSTM:
     def fit(self, Ximg_train, yimg_train, Ximg_val, yimg_val):
         if self.verbose:
             print('[FCN-LSTM] Training FCN-LSTM Classifier')
-        epochs = 2000
+        epochs = self.epoch
         batch_size = 16
         mini_batch_size = int(min(Ximg_train.shape[0] / 10, batch_size))
 

@@ -3,20 +3,24 @@ import time
 import keras
 
 from classifiers.classifiers import predict_model_deep_learning
+from tensorflow.python.keras.layers import GRU, Concatenate
 from utils.tools import save_logs
 
 __author__ = "Chang Wei Tan"
 
 
 # Most of the code here are taken from https://github.com/hfawaz/dl-4-tsc
+# Attention model explanation: https://towardsdatascience.com/light-on-math-ml-attention-with-keras-dc8dbc1fad39
+# Attention code: https://github.com/thushv89/attention_keras
 
 class Classifier_ResNet:
-    def __init__(self, output_directory, input_shape, nb_classes, verbose=False):
+    def __init__(self, output_directory, input_shape, nb_classes,epoch, verbose=False):
         if verbose:
             print('[ResNet] Creating ResNet Classifier')
         self.verbose = verbose
         self.output_directory = output_directory
         self.model = self.build_model(input_shape, nb_classes)
+        self.epoch = epoch
         if verbose:
             self.model.summary()
 
@@ -84,20 +88,19 @@ class Classifier_ResNet:
         output_block_3 = keras.layers.add([shortcut_y, conv_z])
         output_block_3 = keras.layers.Activation('relu')(output_block_3)
 
-        # FINAL
-
         gap_layer = keras.layers.GlobalAveragePooling1D()(output_block_3)
 
         output_layer = keras.layers.Dense(nb_classes, activation='softmax')(gap_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+        model.summary()
 
         return model
 
     def fit(self, Ximg_train, yimg_train, Ximg_val=None, yimg_val=None):
         if self.verbose:
             print('[ResNet] Training ResNet Classifier')
-        epochs = 1500
+        epochs = self.epoch
         batch_size = 64
         mini_batch_size = int(min(Ximg_train.shape[0] / 10, batch_size))
 
