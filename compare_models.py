@@ -1,4 +1,5 @@
 import sys
+import os
 
 import numpy as np
 import pandas as pd
@@ -61,11 +62,12 @@ def create_classifier(classifier_name, input_shape, nb_classes, epoch, verbose=T
 
 
 # todo make this real time and read from Emotiv device
-data_path = "/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/TS_Segmentation/"
-output_directory = '/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/output/'
+cwd = os.getcwd()
+data_path = cwd + "/TS_Segmentation/"
+output_directory = cwd + "/output/"
 problem = "Emotiv266"
 classifier_names = ["attention_bidirectional", "resnet_lstm"]
-epoch = 1
+epoch = 3
 result_train = []
 result_test = []
 result_val = []
@@ -189,18 +191,17 @@ f.close()
 trace1 = go.Bar(
     x=classifier_names,
     y=result_train,
-    name='Train'
-)
+    name='Train')
+
 trace2 = go.Bar(
     x=classifier_names,
     y=result_val,
-    name='Val'
-)
+    name='Val')
+
 trace3 = go.Bar(
     x=classifier_names,
     y=result_test,
-    name='Test'
-)
+    name='Test')
 
 data = [trace1, trace2, trace3]
 layout = go.Layout(barmode='group')

@@ -1,4 +1,5 @@
 import sys
+import os
 
 import numpy as np
 import pandas as pd
@@ -62,8 +63,9 @@ def create_classifier(classifier_name, input_shape, nb_classes, epoch, verbose=T
         return rocket.Classifier_Rocket(output_directory, input_shape, nb_classes, verbose)
 
 # todo make this real time and read from Emotiv device
-data_path = "/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/TS_Segmentation/"
-output_directory = '/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/output'
+cwd = os.getcwd()
+data_path = cwd + "/TS_Segmentation/"
+output_directory = cwd + "/output/"
 problem = "Emotiv266"
 classifier_name = "attention_bidirectional"
 window_len = 40
