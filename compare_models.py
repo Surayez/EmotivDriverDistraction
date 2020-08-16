@@ -173,14 +173,15 @@ for classifier_name in classifier_names:
     metrics.to_csv(output_directory + 'classification_metrics.csv')
     np.savetxt(output_directory + 'confusion_matrix.csv', conf_mat, delimiter=",")
 
-result_train = "Train: " + str(result_train)
-result_test = "Test: " + str(result_test)
-result_val = "Val: " + str(result_val)
+
+train = "Train: " + str(result_train)
+test = "Test: " + str(result_test)
+val = "Val: " + str(result_val)
 
 f = open('results.txt', 'w')
-f.write(result_train)
-f.write(result_test)
-f.write(result_val)
+f.write(train)
+f.write(test)
+f.write(val)
 f.close()
 
 trace1 = go.Bar(
