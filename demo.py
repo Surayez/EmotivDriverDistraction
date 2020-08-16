@@ -63,7 +63,7 @@ def create_classifier(classifier_name, input_shape, nb_classes, epoch, verbose=T
 
 # todo make this real time and read from Emotiv device
 data_path = "/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/TS_Segmentation/"
-output_directory = '/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/'
+output_directory = '/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/output'
 problem = "Emotiv266"
 classifier_name = "attention_bidirectional"
 window_len = 40

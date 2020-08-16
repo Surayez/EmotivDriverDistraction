@@ -9,8 +9,6 @@ from classifiers.classifiers import predict_model_deep_learning
 from utils.classifier_tools import create_class_weight
 from utils.tools import save_logs
 
-from utils.AttentionLayer import AttentionLayer
-
 __author__ = "Chang Wei Tan"
 
 

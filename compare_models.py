@@ -34,9 +34,6 @@ def fit_classifier(epoch, all_labels, X_train, y_train, X_val=None, y_val=None):
 
 
 def create_classifier(classifier_name, input_shape, nb_classes, epoch, verbose=True):
-    # if classifier_name == 'attention_trend':
-    #     from classifiers import attention_trend
-    #     return attention_trend.Classifier_Attention_Trend(output_directory, input_shape, verbose)
     if "attention" in classifier_name:
         from classifiers import attention_classifier
         return attention_classifier.Classifier_Attention(classifier_name, output_directory, input_shape, epoch, verbose)
@@ -65,10 +62,10 @@ def create_classifier(classifier_name, input_shape, nb_classes, epoch, verbose=T
 
 # todo make this real time and read from Emotiv device
 data_path = "/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/TS_Segmentation/"
-output_directory = '/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/'
+output_directory = '/Users/surayezrahman/University/Year4Sem1/Honours_Projects/EmotivDriverDistraction_SEM1/output'
 problem = "Emotiv266"
-classifier_names = ["attention_bidirectional", "attention_resnet", "resnet_lstm"]
-epoch = 3
+classifier_names = ["attention_bidirectional", "resnet_lstm"]
+epoch = 1
 result_train = []
 result_test = []
 result_val = []
@@ -176,9 +173,16 @@ for classifier_name in classifier_names:
     metrics.to_csv(output_directory + 'classification_metrics.csv')
     np.savetxt(output_directory + 'confusion_matrix.csv', conf_mat, delimiter=",")
 
-print("Train:", result_train)
-print("Val:", result_val)
-print("Test:", result_test)
+result_train = "Train: " + str(result_train)
+result_test = "Test: " + str(result_test)
+result_val = "Val: " + str(result_val)
+
+f = open('results.txt', 'w')
+f.write(result_train)
+f.write(result_test)
+f.write(result_val)
+f.close()
+
 trace1 = go.Bar(
     x=classifier_names,
     y=result_train,
