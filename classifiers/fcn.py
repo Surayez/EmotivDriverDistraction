@@ -12,11 +12,12 @@ __author__ = "Chang Wei Tan"
 # Most of the code here are taken from https://github.com/hfawaz/dl-4-tsc
 
 class Classifier_FCN:
-    def __init__(self, output_directory, input_shape, nb_classes, verbose=False):
+    def __init__(self, output_directory, input_shape, nb_classes, epoch, verbose=False):
         if verbose:
             print('Creating FCN Classifier')
         self.verbose = verbose
         self.output_directory = output_directory
+        self.epoch = epoch
         self.model = self.build_model(input_shape, nb_classes)
         if verbose:
             self.model.summary()
@@ -50,7 +51,7 @@ class Classifier_FCN:
     def fit(self, Ximg_train, yimg_train, Ximg_val, yimg_val):
         if self.verbose:
             print('[FCN] Training FCN Classifier')
-        epochs = 2000
+        epochs = self.epoch
         batch_size = 16
         mini_batch_size = int(min(Ximg_train.shape[0] / 10, batch_size))
 
