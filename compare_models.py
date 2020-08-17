@@ -14,28 +14,33 @@ pd.set_option('display.max_columns', 500)
 __author__ = "Chang Wei Tan and Surayez Rahman"
 
 
-def results_table(models, train, test, val):
+def results_table(classifier_names, train, test, val):
+    models = ["Models"] + classifier_names
+    result_train = ["Train"] + train
+    result_test = ["Test"] + test
+    result_val = ["Val"] + val
+
     # Create a results table CSV
     table = open("results_table.csv", "w", newline="")
     writer = csv.writer(table, delimiter=',')
-    writer.writerows([models, train, test, val])
+    writer.writerows([models, result_train, result_test, result_val])
     table.close()
 
 
-def results_chart(models, train, test, val):
+def results_chart(classifier_names, train, test, val):
     # Create a results bar chart
     trace1 = go.Bar(
-        x=models,
+        x=classifier_names,
         y=train,
         name='Train')
 
     trace2 = go.Bar(
-        x=models,
+        x=classifier_names,
         y=test,
         name='Val')
 
     trace3 = go.Bar(
-        x=models,
+        x=classifier_names,
         y=val,
         name='Test')
 
@@ -213,10 +218,9 @@ if __name__ == "__main__":
     binary = True
 
     # Prepare results arrays
-    models = ["Models"] + classifier_names
-    result_train = ["Train"]
-    result_test = ["Test"]
-    result_val = ["Val"]
+    result_train = []
+    result_test = []
+    result_val = []
 
     for classifier_name in classifier_names:
         # Run each Model
@@ -227,5 +231,5 @@ if __name__ == "__main__":
         result_val.append(metrics["accuracy"].values[1] * 100)
         result_test.append(metrics["accuracy"].values[2] * 100)
 
-    results_table(models, result_train, result_test, result_val)
+    results_table(classifier_names, result_train, result_test, result_val)
     results_chart(classifier_names, result_train, result_test, result_val)
