@@ -1,10 +1,7 @@
-import sys
 import os
-
 import numpy as np
 import pandas as pd
 from plotly.offline import plot
-
 from utils import data_loader
 from utils.classifier_tools import prepare_inputs_deep_learning, prepare_inputs, prepare_inputs_cnn_lstm
 from utils.tools import create_directory
@@ -13,10 +10,42 @@ import plotly.graph_objs as go
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 
-__author__ = "Chang Wei Tan & Surayez Rahman"
+__author__ = "Chang Wei Tan and Surayez Rahman"
 
 
-def fit_classifier(epoch, all_labels, X_train, y_train, X_val=None, y_val=None):
+def results_table(models, train, test, val):
+    f = open('results_table.csv', 'w')
+    f.write(models)
+    f.write(train)
+    f.write(test)
+    f.write(val)
+    f.close()
+
+
+def results_chart(models, train, test, val):
+
+    trace1 = go.Bar(
+        x=models,
+        y=train,
+        name='Train')
+
+    trace2 = go.Bar(
+        x=models,
+        y=test,
+        name='Val')
+
+    trace3 = go.Bar(
+        x=models,
+        y=val,
+        name='Test')
+
+    data = [trace1, trace2, trace3]
+    layout = go.Layout(barmode='group')
+    fig = go.Figure(data=data, layout=layout)
+    plot(fig)
+
+
+def fit_classifier(classifier_name, epoch, output_directory, all_labels, X_train, y_train, X_val=None, y_val=None):
     nb_classes = len(np.unique(all_labels))
 
     if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or ("attention" in classifier_name):
@@ -24,8 +53,7 @@ def fit_classifier(epoch, all_labels, X_train, y_train, X_val=None, y_val=None):
     else:
         input_shape = (X_train.shape[1], X_train.shape[2])
 
-
-    classifier = create_classifier(classifier_name, input_shape, nb_classes, epoch)
+    classifier = create_classifier(classifier_name, output_directory, input_shape, nb_classes, epoch)
     if X_val is None:
         classifier.fit(X_train, y_train)
     else:
@@ -34,7 +62,7 @@ def fit_classifier(epoch, all_labels, X_train, y_train, X_val=None, y_val=None):
     return classifier
 
 
-def create_classifier(classifier_name, input_shape, nb_classes, epoch, verbose=True):
+def create_classifier(classifier_name, output_directory, input_shape, nb_classes, epoch, verbose=True):
     if "attention" in classifier_name:
         from classifiers import attention_classifier
         return attention_classifier.Classifier_Attention(classifier_name, output_directory, input_shape, epoch, verbose)
@@ -61,22 +89,84 @@ def create_classifier(classifier_name, input_shape, nb_classes, epoch, verbose=T
         return rocket.Classifier_Rocket(output_directory, input_shape, nb_classes, verbose)
 
 
-# todo make this real time and read from Emotiv device
-cwd = os.getcwd()
-data_path = cwd + "/TS_Segmentation/"
-output_directory = cwd + "/output/"
-problem = "Emotiv266"
-classifier_names = ["attention_bidirectional", "resnet_lstm"]
-epoch = 3
-result_train = []
-result_test = []
-result_val = []
 
-window_len = 40
-stride = 20
-binary = True
+def run_deep_learning_models(classifier_name, train_data, test_data, output_directory, epoch, window_len, stride, binary):
+    if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or (
+            "attention" in classifier_name):
+        X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
+                                                                                 test_inputs=test_data,
+                                                                                 window_len=window_len,
+                                                                                 stride=stride,
+                                                                                 binary=binary)
+    else:
+        X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_deep_learning(train_inputs=train_data,
+                                                                                      test_inputs=test_data,
+                                                                                      window_len=window_len,
+                                                                                      stride=stride,
+                                                                                      binary=binary)
 
-for classifier_name in classifier_names:
+    print("[Compare_Models] Train series:", X_train.shape)
+    if X_val is not None:
+        print("[Compare_Models] Val series:", X_val.shape)
+    print("[Compare_Models] Test series", X_test.shape)
+
+    if y_val is not None:
+        all_labels = np.concatenate((y_train, y_val, y_test), axis=0)
+    else:
+        all_labels = np.concatenate((y_train, y_test), axis=0)
+    print("[Compare_Models] All labels: {}".format(np.unique(all_labels)))
+
+    tmp = pd.get_dummies(all_labels).values
+
+    y_train = tmp[:len(y_train)]
+    y_val = tmp[len(y_train):len(y_train) + len(y_val)]
+    y_test = tmp[len(y_train) + len(y_val):]
+
+    # Fit the classifier
+    classifier = fit_classifier(classifier_name, epoch, output_directory, all_labels, X_train, y_train, X_val, y_val)
+
+    # Predict using classifier [Train, Val, Test]
+    metrics_train, _ = classifier.predict(X_train, y_train)
+    metrics_val, _ = classifier.predict(X_val, y_val)
+    metrics_test, conf_mat = classifier.predict(X_test, y_test)
+
+    metrics_train['train/val/test'] = 'train'
+    metrics_val['train/val/test'] = 'val'
+    metrics_test['train/val/test'] = 'test'
+
+    metrics = pd.concat([metrics_train, metrics_val, metrics_test]).reset_index(drop=True)
+    return metrics, conf_mat
+
+
+def run_rocket(train_data, test_data, output_directory, epoch, window_len, stride, binary):
+    X_train, y_train, X_test, y_test = prepare_inputs(train_inputs=train_data,
+                                                     test_inputs=test_data,
+                                                     window_len=window_len,
+                                                     stride=stride,
+                                                     binary=binary)
+    print("[Compare_Models] Train series:", X_train.shape)
+    print("[Compare_Models] Test series", X_test.shape)
+
+    all_labels = np.concatenate((y_train, y_test), axis=0)
+    print("[Compare_Models] All labels: {}".format(np.unique(all_labels)))
+
+    classifier = fit_classifier("rocket", epoch, output_directory, all_labels, X_train, y_train)
+
+    metrics_train, _ = classifier.predict(X_train, y_train)
+    metrics_test, conf_mat = classifier.predict(X_test, y_test)
+
+    metrics_train['train/val/test'] = 'train'
+    metrics_test['train/val/test'] = 'test'
+
+    metrics = pd.concat([metrics_train, metrics_test]).reset_index(drop=True)
+    return metrics, conf_mat
+
+
+def run_model(classifier_name, problem, epoch, window_len, stride, binary):
+    # Set up output location
+    cwd = os.getcwd()
+    data_path = cwd + "/TS_Segmentation/"
+    output_directory = cwd + "/output/"
     output_directory = output_directory + classifier_name + '/' + problem + '/'
     create_directory(output_directory)
 
@@ -101,109 +191,41 @@ for classifier_name in classifier_names:
     print("[Compare_Models] {} test series".format(len(test_data)))
 
     if classifier_name == "rocket":
-        X_train, y_train, X_test, y_test = prepare_inputs(train_inputs=train_data,
-                                                          test_inputs=test_data,
-                                                          window_len=window_len,
-                                                          stride=stride,
-                                                          binary=binary)
-        print("[Compare_Models] Train series:", X_train.shape)
-        print("[Compare_Models] Test series", X_test.shape)
-
-        all_labels = np.concatenate((y_train, y_test), axis=0)
-        print("[Compare_Models] All labels: {}".format(np.unique(all_labels)))
-
-        classifier = fit_classifier(epoch, all_labels, X_train, y_train)
-
-        metrics_train, _ = classifier.predict(X_train, y_train)
-        metrics_test, conf_mat = classifier.predict(X_test, y_test)
-
-        metrics_train['train/val/test'] = 'train'
-        metrics_test['train/val/test'] = 'test'
-
-        metrics = pd.concat([metrics_train, metrics_test]).reset_index(drop=True)
-        print(metrics.head())
+        metrics, conf_mat = run_rocket(train_data, test_data, output_directory, epoch, window_len, stride, binary)
 
     else:
-        if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or (
-                "attention" in classifier_name):
-            X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
-                                                                                     test_inputs=test_data,
-                                                                                     window_len=window_len,
-                                                                                     stride=stride,
-                                                                                     binary=binary)
-        else:
-            X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_deep_learning(train_inputs=train_data,
-                                                                                          test_inputs=test_data,
-                                                                                          window_len=window_len,
-                                                                                          stride=stride,
-                                                                                          binary=binary)
+        metrics, conf_mat = run_deep_learning_models(classifier_name, train_data, test_data, output_directory, epoch, window_len, stride, binary)
 
-        print("[Compare_Models] Train series:", X_train.shape)
-        if X_val is not None:
-            print("[Compare_Models] Val series:", X_val.shape)
-        print("[Compare_Models] Test series", X_test.shape)
-
-        if y_val is not None:
-            all_labels = np.concatenate((y_train, y_val, y_test), axis=0)
-        else:
-            all_labels = np.concatenate((y_train, y_test), axis=0)
-        print("[Compare_Models] All labels: {}".format(np.unique(all_labels)))
-
-        tmp = pd.get_dummies(all_labels).values
-
-        y_train = tmp[:len(y_train)]
-        y_val = tmp[len(y_train):len(y_train) + len(y_val)]
-        y_test = tmp[len(y_train) + len(y_val):]
-
-        classifier = fit_classifier(epoch, all_labels, X_train, y_train, X_val, y_val)
-
-        metrics_train, _ = classifier.predict(X_train, y_train)
-        metrics_val, _ = classifier.predict(X_val, y_val)
-        metrics_test, conf_mat = classifier.predict(X_test, y_test)
-
-        metrics_train['train/val/test'] = 'train'
-        metrics_val['train/val/test'] = 'val'
-        metrics_test['train/val/test'] = 'test'
-
-        metrics = pd.concat([metrics_train, metrics_val, metrics_test]).reset_index(drop=True)
-
-        print(metrics.head())
-        result_train.append(metrics["accuracy"].values[0] * 100)
-        result_val.append(metrics["accuracy"].values[1] * 100)
-        result_test.append(metrics["accuracy"].values[2] * 100)
 
     metrics.to_csv(output_directory + 'classification_metrics.csv')
     np.savetxt(output_directory + 'confusion_matrix.csv', conf_mat, delimiter=",")
 
+    return metrics
 
-models = "Models:" + str(classifier_names) + '\n'
-train = "Train: " + str(result_train) + '\n'
-test = "Test: " + str(result_test) + '\n'
-val = "Val: " + str(result_val) + '\n'
 
-f = open('results.txt', 'w')
-f.write(models)
-f.write(train)
-f.write(test)
-f.write(val)
-f.close()
 
-trace1 = go.Bar(
-    x=classifier_names,
-    y=result_train,
-    name='Train')
+if __name__ == "__main__":
+    problem = "Emotiv266"
+    classifier_names = ["attention_bidirectional", "resnet_lstm"]
+    epoch = 3
+    window_len = 40
+    stride = 20
+    binary = True
 
-trace2 = go.Bar(
-    x=classifier_names,
-    y=result_val,
-    name='Val')
+    # Prepare results arrays
+    models = ["Models"] + classifier_names
+    result_train = ["Train"]
+    result_test = ["Test"]
+    result_val = ["Val"]
 
-trace3 = go.Bar(
-    x=classifier_names,
-    y=result_test,
-    name='Test')
+    for classifier_name in classifier_names:
+        # Run each Model
+        metrics = run_model(classifier_name, problem, epoch, window_len, stride, binary)
+        print(metrics.head())
 
-data = [trace1, trace2, trace3]
-layout = go.Layout(barmode='group')
-fig = go.Figure(data=data, layout=layout)
-plot(fig)
+        result_train.append(metrics["accuracy"].values[0] * 100)
+        result_val.append(metrics["accuracy"].values[1] * 100)
+        result_test.append(metrics["accuracy"].values[2] * 100)
+
+    results_table(models, result_train, result_test, result_val)
+    results_chart(classifier_names, result_train, result_test, result_val)
