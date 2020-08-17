@@ -1,4 +1,5 @@
 import os
+import csv
 import numpy as np
 import pandas as pd
 from plotly.offline import plot
@@ -14,16 +15,15 @@ __author__ = "Chang Wei Tan and Surayez Rahman"
 
 
 def results_table(models, train, test, val):
-    f = open('results_table.csv', 'w')
-    f.write(models)
-    f.write(train)
-    f.write(test)
-    f.write(val)
-    f.close()
+    # Create a results table CSV
+    table = open("results_table.csv", "w", newline="")
+    writer = csv.writer(table, delimiter=',')
+    writer.writerows([models, train, test, val])
+    table.close()
 
 
 def results_chart(models, train, test, val):
-
+    # Create a results bar chart
     trace1 = go.Bar(
         x=models,
         y=train,
@@ -45,19 +45,19 @@ def results_chart(models, train, test, val):
     plot(fig)
 
 
-def fit_classifier(classifier_name, epoch, output_directory, all_labels, X_train, y_train, X_val=None, y_val=None):
+def fit_classifier(classifier_name, epoch, output_directory, all_labels, x_train, y_train, X_val=None, y_val=None):
     nb_classes = len(np.unique(all_labels))
 
     if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or ("attention" in classifier_name):
-        input_shape = (None, X_train.shape[2], X_train.shape[3])
+        input_shape = (None, x_train.shape[2], x_train.shape[3])
     else:
-        input_shape = (X_train.shape[1], X_train.shape[2])
+        input_shape = (x_train.shape[1], x_train.shape[2])
 
     classifier = create_classifier(classifier_name, output_directory, input_shape, nb_classes, epoch)
     if X_val is None:
-        classifier.fit(X_train, y_train)
+        classifier.fit(x_train, y_train)
     else:
-        classifier.fit(X_train, y_train, X_val, y_val)
+        classifier.fit(x_train, y_train, X_val, y_val)
 
     return classifier
 
@@ -89,8 +89,9 @@ def create_classifier(classifier_name, output_directory, input_shape, nb_classes
         return rocket.Classifier_Rocket(output_directory, input_shape, nb_classes, verbose)
 
 
+def run_deep_learning_models(classifier_name, train_data, test_data, output_directory,
+                             epoch, window_len, stride, binary):
 
-def run_deep_learning_models(classifier_name, train_data, test_data, output_directory, epoch, window_len, stride, binary):
     if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or (
             "attention" in classifier_name):
         X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
@@ -140,10 +141,10 @@ def run_deep_learning_models(classifier_name, train_data, test_data, output_dire
 
 def run_rocket(train_data, test_data, output_directory, epoch, window_len, stride, binary):
     X_train, y_train, X_test, y_test = prepare_inputs(train_inputs=train_data,
-                                                     test_inputs=test_data,
-                                                     window_len=window_len,
-                                                     stride=stride,
-                                                     binary=binary)
+                                                      test_inputs=test_data,
+                                                      window_len=window_len,
+                                                      stride=stride,
+                                                      binary=binary)
     print("[Compare_Models] Train series:", X_train.shape)
     print("[Compare_Models] Test series", X_test.shape)
 
@@ -194,14 +195,13 @@ def run_model(classifier_name, problem, epoch, window_len, stride, binary):
         metrics, conf_mat = run_rocket(train_data, test_data, output_directory, epoch, window_len, stride, binary)
 
     else:
-        metrics, conf_mat = run_deep_learning_models(classifier_name, train_data, test_data, output_directory, epoch, window_len, stride, binary)
-
+        metrics, conf_mat = run_deep_learning_models(classifier_name, train_data, test_data, output_directory, epoch,
+                                                     window_len, stride, binary)
 
     metrics.to_csv(output_directory + 'classification_metrics.csv')
     np.savetxt(output_directory + 'confusion_matrix.csv', conf_mat, delimiter=",")
 
     return metrics
-
 
 
 if __name__ == "__main__":
