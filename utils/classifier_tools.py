@@ -1,17 +1,19 @@
 import math
 
 import numpy as np
+from collections import Counter
 from scipy import stats
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import RandomOverSampler
 
-__author__ = "Chang Wei Tan"
+__author__ = "Chang Wei Tan and Surayez Rahman"
 
 
 # Most of the code here are taken from https://github.com/hfawaz/dl-4-tsc
 
 def prepare_inputs_attention(train_inputs, test_inputs, window_len=40, stride=20,
-                                 val_size=2, random_state=1234, binary=True, class_one=None, verbose=1):
+                             val_size=2, random_state=1234, binary=True, class_one=None, verbose=1):
     # This function prepare the inputs to have the right shape for attention attention_models.
     # The shape we are after is (n_series, series_len, series_dim)
     # Inputs are df with data and label columns
@@ -25,6 +27,7 @@ def prepare_inputs_attention(train_inputs, test_inputs, window_len=40, stride=20
     #   binary:         whether we convert to binary case
     #   class_one:      the classes to be used as class one
     #   verbose:        verbosity
+
     if class_one is None:
         class_one = [3, 11]
     if verbose > 0:
@@ -44,10 +47,10 @@ def prepare_inputs_attention(train_inputs, test_inputs, window_len=40, stride=20
         this_series = train_inputs.data[i]
         this_series_labels = train_inputs.label[i]
         subsequences, sub_label = extract_subsequences_attention(this_series, this_series_labels,
-                                                       window_size=window_len,
-                                                       stride=stride,
-                                                       binary=binary,
-                                                       class_one=class_one)
+                                                                 window_size=window_len,
+                                                                 stride=stride,
+                                                                 binary=binary,
+                                                                 class_one=class_one)
         [X_train.append(x) for x in subsequences]
         [y_train.append(x) for x in sub_label]
     X_train = np.array(X_train)
@@ -63,10 +66,10 @@ def prepare_inputs_attention(train_inputs, test_inputs, window_len=40, stride=20
             this_series = train_inputs.data[i]
             this_series_labels = train_inputs.label[i]
             subsequences, sub_label = extract_subsequences_attention(this_series, this_series_labels,
-                                                           window_size=window_len,
-                                                           stride=stride,
-                                                           binary=binary,
-                                                           class_one=class_one)
+                                                                     window_size=window_len,
+                                                                     stride=stride,
+                                                                     binary=binary,
+                                                                     class_one=class_one)
             [X_val.append(x) for x in subsequences]
             [y_val.append(x) for x in sub_label]
         X_val = np.array(X_val)
@@ -78,10 +81,10 @@ def prepare_inputs_attention(train_inputs, test_inputs, window_len=40, stride=20
         this_series = test_inputs.data[i]
         this_series_labels = test_inputs.label[i]
         subsequences, sub_label = extract_subsequences_attention(this_series, this_series_labels,
-                                                       window_size=window_len,
-                                                       stride=stride,
-                                                       binary=binary,
-                                                       class_one=class_one)
+                                                                 window_size=window_len,
+                                                                 stride=stride,
+                                                                 binary=binary,
+                                                                 class_one=class_one)
         [X_test.append(x) for x in subsequences]
         [y_test.append(x) for x in sub_label]
     X_test = np.array(X_test)
@@ -170,6 +173,24 @@ def prepare_inputs_deep_learning(train_inputs, test_inputs, window_len=40, strid
     return X_train, y_train, X_val, y_val, X_test, y_test
 
 
+def up_sample(x_train, y_train):
+    # Ref: https://stackoverflow.com/questions/56125380/resampling-data-using-smote-from-imblearn-with-3d-numpy-arrays
+    print('Original dataset shape {}'.format(x_train.shape))
+    print('Original dataset classes {}'.format(Counter(y_train)))
+    orig_shape = x_train.shape
+    x_train_reshaped = np.reshape(x_train, (x_train.shape[0], x_train.shape[1] * x_train.shape[2]))
+
+    ros = RandomOverSampler(random_state=0)
+    X_res, y_res = ros.fit_sample(x_train_reshaped, y_train)
+    X_res_shape = X_res.shape
+
+    x_train_final = np.reshape(X_res, (X_res_shape[0], orig_shape[1], orig_shape[2]))
+    print('Re-sampled dataset shape {}'.format(x_train_final.shape))
+    print('Re-sampled dataset classes {}'.format(Counter(y_res)))
+
+    return x_train_final, y_res
+
+
 def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
                             val_size=2, random_state=1234, n_subs=4, binary=True, class_one=None, verbose=1):
     # This function prepare the inputs to have the right shape for deep learning attention_models specifically CNN-LSTM attention_models.
@@ -211,8 +232,12 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
                                                        class_one=class_one)
         [X_train.append(x) for x in subsequences]
         [y_train.append(x) for x in sub_label]
+
     X_train = np.array(X_train)
     y_train = np.array(y_train)
+
+    # Up-sampling data
+    X_train, y_train = up_sample(X_train, y_train)
 
     X_train = X_train.reshape((X_train.shape[0], n_subs, n_length, X_train.shape[2]))
 
@@ -231,6 +256,8 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
     X_val = np.array(X_val)
     y_val = np.array(y_val)
 
+    X_val, y_val = up_sample(X_val, y_val)
+
     X_val = X_val.reshape((X_val.shape[0], n_subs, n_length, X_val.shape[2]))
 
     X_test = []
@@ -247,6 +274,7 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
         [y_test.append(x) for x in sub_label]
     X_test = np.array(X_test)
     y_test = np.array(y_test)
+    X_test, y_test = up_sample(X_test, y_test)
 
     X_test = X_test.reshape((X_test.shape[0], n_subs, n_length, X_test.shape[2]))
 
@@ -301,7 +329,6 @@ def prepare_inputs(train_inputs, test_inputs, window_len=40, stride=20, binary=T
     y_test = np.array(y_test)
 
     return X_train, y_train, X_test, y_test
-
 
 
 def extract_subsequences_attention(X_data, y_data, window_size=30, stride=1, binary=True, class_one=None, norm=True):
