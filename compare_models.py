@@ -94,57 +94,11 @@ def create_classifier(classifier_name, output_directory, input_shape, nb_classes
         return rocket.Classifier_Rocket(output_directory, input_shape, nb_classes, verbose)
 
 
-def run_deep_learning_models(classifier_name, train_data, test_data, output_directory,
-                             epoch, window_len, stride, binary):
+def run_rocket(data, epoch, window_len, stride, binary):
+    train_data = data[1]
+    test_data = data[2]
+    output_directory = data[7]
 
-    if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or (
-            "attention" in classifier_name):
-        X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
-                                                                                 test_inputs=test_data,
-                                                                                 window_len=window_len,
-                                                                                 stride=stride,
-                                                                                 binary=binary)
-    else:
-        X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_deep_learning(train_inputs=train_data,
-                                                                                      test_inputs=test_data,
-                                                                                      window_len=window_len,
-                                                                                      stride=stride,
-                                                                                      binary=binary)
-
-    print("[Compare_Models] Train series:", X_train.shape)
-    if X_val is not None:
-        print("[Compare_Models] Val series:", X_val.shape)
-    print("[Compare_Models] Test series", X_test.shape)
-
-    if y_val is not None:
-        all_labels = np.concatenate((y_train, y_val, y_test), axis=0)
-    else:
-        all_labels = np.concatenate((y_train, y_test), axis=0)
-    print("[Compare_Models] All labels: {}".format(np.unique(all_labels)))
-
-    tmp = pd.get_dummies(all_labels).values
-
-    y_train = tmp[:len(y_train)]
-    y_val = tmp[len(y_train):len(y_train) + len(y_val)]
-    y_test = tmp[len(y_train) + len(y_val):]
-
-    # Fit the classifier
-    classifier = fit_classifier(classifier_name, epoch, output_directory, all_labels, X_train, y_train, X_val, y_val)
-
-    # Predict using classifier [Train, Val, Test]
-    metrics_train, _ = classifier.predict(X_train, y_train)
-    metrics_val, _ = classifier.predict(X_val, y_val)
-    metrics_test, conf_mat = classifier.predict(X_test, y_test)
-
-    metrics_train['train/val/test'] = 'train'
-    metrics_val['train/val/test'] = 'val'
-    metrics_test['train/val/test'] = 'test'
-
-    metrics = pd.concat([metrics_train, metrics_val, metrics_test]).reset_index(drop=True)
-    return metrics, conf_mat
-
-
-def run_rocket(train_data, test_data, output_directory, epoch, window_len, stride, binary):
     X_train, y_train, X_test, y_test = prepare_inputs(train_inputs=train_data,
                                                       test_inputs=test_data,
                                                       window_len=window_len,
@@ -168,12 +122,52 @@ def run_rocket(train_data, test_data, output_directory, epoch, window_len, strid
     return metrics, conf_mat
 
 
-def run_model(classifier_name, problem, epoch, window_len, stride, binary):
+def run_deep_learning_models(classifier_name, data, epoch):
+    all_labels = data[0]
+    X_train = data[1]
+    y_train = data[2]
+    X_val = data[3]
+    y_val = data[4]
+    X_test = data[5]
+    y_test = data[6]
+    output_directory = data[7]
+
+    # Fit the classifier
+    classifier = fit_classifier(classifier_name, epoch, output_directory, all_labels, X_train, y_train, X_val, y_val)
+
+    # Predict using classifier [Train, Val, Test]
+    metrics_train, _ = classifier.predict(X_train, y_train)
+    metrics_val, _ = classifier.predict(X_val, y_val)
+    metrics_test, conf_mat = classifier.predict(X_test, y_test)
+
+    metrics_train['train/val/test'] = 'train'
+    metrics_val['train/val/test'] = 'val'
+    metrics_test['train/val/test'] = 'test'
+
+    metrics = pd.concat([metrics_train, metrics_val, metrics_test]).reset_index(drop=True)
+    return metrics, conf_mat
+
+
+def run_model(classifier_name, data, epoch, window_len, stride, binary):
+    output_directory = data[7]
+    if classifier_name == "rocket":
+        metrics, conf_mat = run_rocket(data, epoch, window_len, stride, binary)
+
+    else:
+        metrics, conf_mat = run_deep_learning_models(classifier_name, data, epoch)
+
+    metrics.to_csv(output_directory + 'classification_metrics.csv')
+    np.savetxt(output_directory + 'confusion_matrix.csv', conf_mat, delimiter=",")
+
+    return metrics
+
+
+def prepare_data_cnn_lstm(window_len, stride, binary):
     # Set up output location
     cwd = os.getcwd()
     data_path = cwd + "/TS_Segmentation/"
     output_directory = cwd + "/output/"
-    output_directory = output_directory + classifier_name + '/' + problem + '/'
+    output_directory = output_directory + "compare_models" + '/' + problem + '/'
     create_directory(output_directory)
 
     print("#########################################################################")
@@ -182,7 +176,6 @@ def run_model(classifier_name, problem, epoch, window_len, stride, binary):
     print("[Compare_Models] Data path: {}".format(data_path))
     print("[Compare_Models] Output Dir: {}".format(output_directory))
     print("[Compare_Models] Problem: {}".format(problem))
-    print("[Compare_Models] Classifier: {}".format(classifier_name))
     print("[Compare_Models] Window Len: {}".format(window_len))
     print("[Compare_Models] Stride: {}".format(stride))
     print("#########################################################################")
@@ -196,23 +189,42 @@ def run_model(classifier_name, problem, epoch, window_len, stride, binary):
     print("[Compare_Models] {} train series".format(len(train_data)))
     print("[Compare_Models] {} test series".format(len(test_data)))
 
-    if classifier_name == "rocket":
-        metrics, conf_mat = run_rocket(train_data, test_data, output_directory, epoch, window_len, stride, binary)
+    X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
+                                                                             test_inputs=test_data,
+                                                                             window_len=window_len,
+                                                                             stride=stride,
+                                                                             binary=binary)
 
+    #     X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_deep_learning(train_inputs=train_data,
+    #                                                                                   test_inputs=test_data,
+    #                                                                                   window_len=window_len,
+    #                                                                                   stride=stride,
+    #                                                                                   binary=binary)
+
+    print("[Compare_Models] Train series:", X_train.shape)
+    if X_val is not None:
+        print("[Compare_Models] Val series:", X_val.shape)
+    print("[Compare_Models] Test series", X_test.shape)
+
+    if y_val is not None:
+        all_labels = np.concatenate((y_train, y_val, y_test), axis=0)
     else:
-        metrics, conf_mat = run_deep_learning_models(classifier_name, train_data, test_data, output_directory, epoch,
-                                                     window_len, stride, binary)
+        all_labels = np.concatenate((y_train, y_test), axis=0)
+    print("[Compare_Models] All labels: {}".format(np.unique(all_labels)))
 
-    metrics.to_csv(output_directory + 'classification_metrics.csv')
-    np.savetxt(output_directory + 'confusion_matrix.csv', conf_mat, delimiter=",")
+    tmp = pd.get_dummies(all_labels).values
 
-    return metrics
+    y_train = tmp[:len(y_train)]
+    y_val = tmp[len(y_train):len(y_train) + len(y_val)]
+    y_test = tmp[len(y_train) + len(y_val):]
+
+    return [all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory]
 
 
 if __name__ == "__main__":
     problem = "Emotiv266"
     classifier_names = ["attention_bidirectional", "resnet_lstm"]
-    epoch = 3
+    epoch = 1
     window_len = 40
     stride = 20
     binary = True
@@ -222,9 +234,12 @@ if __name__ == "__main__":
     result_test = []
     result_val = []
 
+    # Prepare Data
+    data = prepare_data_cnn_lstm(window_len, stride, binary)
+
     for classifier_name in classifier_names:
         # Run each Model
-        metrics = run_model(classifier_name, problem, epoch, window_len, stride, binary)
+        metrics = run_model(classifier_name, data, epoch, window_len, stride, binary)
         print(metrics.head())
 
         result_train.append(metrics["accuracy"].values[0] * 100)
