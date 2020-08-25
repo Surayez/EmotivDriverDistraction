@@ -173,6 +173,25 @@ def prepare_inputs_deep_learning(train_inputs, test_inputs, window_len=40, strid
     return X_train, y_train, X_val, y_val, X_test, y_test
 
 
+# def convert_inputs_deep_learning(data):
+#     all_labels = data[0]
+#     X_train = data[1]
+#     y_train = data[2]
+#     X_val = data[3]
+#     y_val = data[4]
+#     X_test = data[5]
+#     y_test = data[6]
+#     output_directory = data[7]
+#
+#     X_train = X_train.reshape((X_train.shape[0], n_subs, n_length, X_train.shape[2]))
+#     X_val = X_val.reshape((X_val.shape[0], n_subs, n_length, X_val.shape[2]))
+#     X_test = X_test.reshape((X_test.shape[0], n_subs, n_length, X_test.shape[2]))
+#
+#     return all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory
+#
+#
+
+
 def up_sample(x_train, y_train):
     # Ref: https://stackoverflow.com/questions/56125380/resampling-data-using-smote-from-imblearn-with-3d-numpy-arrays
     print('Original dataset shape {}'.format(x_train.shape))
@@ -256,8 +275,6 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
     X_val = np.array(X_val)
     y_val = np.array(y_val)
 
-    X_val, y_val = up_sample(X_val, y_val)
-
     X_val = X_val.reshape((X_val.shape[0], n_subs, n_length, X_val.shape[2]))
 
     X_test = []
@@ -274,8 +291,7 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
         [y_test.append(x) for x in sub_label]
     X_test = np.array(X_test)
     y_test = np.array(y_test)
-    X_test, y_test = up_sample(X_test, y_test)
-
+    
     X_test = X_test.reshape((X_test.shape[0], n_subs, n_length, X_test.shape[2]))
 
     return X_train, y_train, X_val, y_val, X_test, y_test
