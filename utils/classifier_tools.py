@@ -291,7 +291,7 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
         [y_test.append(x) for x in sub_label]
     X_test = np.array(X_test)
     y_test = np.array(y_test)
-    
+
     X_test = X_test.reshape((X_test.shape[0], n_subs, n_length, X_test.shape[2]))
 
     return X_train, y_train, X_val, y_val, X_test, y_test
