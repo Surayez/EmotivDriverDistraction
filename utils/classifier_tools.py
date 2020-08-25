@@ -380,7 +380,7 @@ def extract_subsequences_attention(X_data, y_data, window_size=30, stride=1, bin
 
 def extract_subsequences(X_data, y_data, window_size=30, stride=1, binary=True, class_one=None, norm=True):
     # This function extract subsequences from a long time series.
-    # Assumes that each timestamp has a laextract_subsequencesbel represented by y_data.
+    # Assumes that each timestamp has a label represented by y_data.
     # The label for each subsequence is taken with the majority class in that segment.
     if class_one is None:
         class_one = [3, 11]
