@@ -1,10 +1,10 @@
 import time
 
-import keras
-from keras import Model
-from keras.layers import Dropout, Dense, TimeDistributed, \
-    Flatten, LSTM
+import tensorflow.python.keras as keras
+from tensorflow.python.keras import Model
+from tensorflow.python.keras.layers import Dropout, Dense, TimeDistributed, Flatten, LSTM, Input, GRU, Concatenate
 
+# from classifiers.attention_decoder import AttentionDecoder
 from classifiers.classifiers import predict_model_deep_learning
 from utils.classifier_tools import create_class_weight
 from utils.tools import save_logs
@@ -13,13 +13,16 @@ __author__ = "Chang Wei Tan"
 
 
 class Classifier_ResNet_LSTM:
-    def __init__(self, output_directory, input_shape, nb_classes, verbose=False, dropout_rate=0.3):
+
+    def __init__(self, output_directory, input_shape, nb_classes, epoch, verbose=False, dropout_rate=0.3):
         if verbose:
             print('[ResNet-LSTM] Creating ResNet-LSTM Classifier')
         self.verbose = verbose
+        self.window_len = 40
         self.dropout_rate = dropout_rate
         self.output_directory = output_directory
         self.model = self.build_model(input_shape, nb_classes)
+        self.epoch = epoch
         if verbose == True:
             self.model.summary()
 
@@ -30,6 +33,7 @@ class Classifier_ResNet_LSTM:
 
         main_input = keras.layers.Input(input_shape)
         input_layer = keras.layers.Input((input_shape[1], input_shape[2]))
+
 
         # add model layers
         # BLOCK 1
@@ -110,28 +114,31 @@ class Classifier_ResNet_LSTM:
 
         output_block_3 = keras.layers.add([shortcut_y, conv_z])
         output_block_3 = keras.layers.Activation('relu')(output_block_3)
+        print(output_block_3)
 
         # FINAL
         gap_layer = keras.layers.GlobalAveragePooling1D()(output_block_3)
+        print(gap_layer)
 
         cnn_model = TimeDistributed(Model(inputs=input_layer, outputs=gap_layer))(main_input)
+        print(cnn_model)
 
-        lstm_layer = LSTM(64, return_sequences=True)(cnn_model)
-        lstm_layer = LSTM(64)(lstm_layer)
+        lstm_layer = LSTM(n_feature_maps, return_sequences=True)(cnn_model)
+        lstm_layer = LSTM(n_feature_maps)(lstm_layer)
 
-        output_layer = Dense(64, activation='relu')(lstm_layer)
+        output_layer = Dense(n_feature_maps, activation='relu')(lstm_layer)
         output_layer = keras.layers.Dense(nb_classes, activation='softmax')(output_layer)
 
         model = keras.models.Model(inputs=main_input, outputs=output_layer)
+        model.summary()
 
-        # return the model
         return model
 
     def fit(self, Ximg_train, yimg_train, Ximg_val, yimg_val):
         if self.verbose:
             print('[ResNet-LSTM] Training ResNet-LSTM Classifier')
 
-        epochs = 2000
+        epochs = self.epoch
         batch_size = 16
         mini_batch_size = int(min(Ximg_train.shape[0] / 10, batch_size))
 
@@ -144,6 +151,7 @@ class Classifier_ResNet_LSTM:
         file_path = self.output_directory + 'best_model.h5'
         model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_loss',
                                                            save_best_only=True)
+
         self.callbacks = [reduce_lr, model_checkpoint]
 
         # create class weights based on the y label proportions for each image
