@@ -3,8 +3,11 @@ import keras
 from classifiers.classifiers import predict_model_deep_learning
 from utils.tools import save_logs
 from classifiers.attention_models import attention_model, attention_model_fcn, attention_model_resnet, \
-    attention_experiment, attention_model_bidirectional, multiheadattention_model, selfattention_fcn, selfattention_resnet
+    attention_experiment, attention_model_bidirectional, multiheadattention_model, selfattention_fcn, \
+    selfattention_resnet, multiheadattention_fcn, multiheadattention_resnet
+
 from keras_self_attention import SeqSelfAttention
+from keras_multi_head import MultiHeadAttention
 
 __author__ = "Chang Wei Tan & Surayez Rahman"
 
@@ -33,6 +36,10 @@ class Classifier_Attention:
             self.model = selfattention_fcn.build_model(input_shape)
         elif (classifier_name == "selfattention_resnet"):
             self.model = selfattention_resnet.build_model(input_shape)
+        elif (classifier_name == "multiheadattention_fcn"):
+            self.model = multiheadattention_fcn.build_model(input_shape)
+        elif (classifier_name == "multiheadattention_resnet"):
+            self.model = multiheadattention_resnet.build_model(input_shape)
         else:
             self.model = attention_experiment.build_model(input_shape)
 
@@ -93,6 +100,9 @@ class Classifier_Attention:
         if ("selfattention" in self.classifier_name):
             model = keras.models.load_model(self.output_directory + 'best_model.h5',
                                             custom_objects={'SeqSelfAttention': SeqSelfAttention})
+        elif ("multihead" in self.classifier_name):
+            model = keras.models.load_model(self.output_directory + 'best_model.h5',
+                                            custom_objects={'MultiHeadAttention': MultiHeadAttention})
         else:
             model = keras.models.load_model(self.output_directory + 'best_model.h5')
 
