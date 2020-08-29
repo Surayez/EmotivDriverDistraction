@@ -96,6 +96,7 @@ def build_model(input_shape):
     cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layer))(main_input)
     print(cnn_model)
 
+    # lstm_layer = keras.layers.Bidirectional(keras.layers.LSTM(n_feature_maps, return_sequences=True))(cnn_model)
     lstm_layer = keras.layers.LSTM(n_feature_maps, return_sequences=True)(cnn_model)
 
     att_layer = MultiHeadAttention(head_num=2)(lstm_layer)

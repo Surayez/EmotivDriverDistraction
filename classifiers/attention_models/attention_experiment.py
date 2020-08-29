@@ -1,151 +1,77 @@
 import keras
+import tensorflow as tf
+from tensorflow.keras import layers
+
+# from tensor2tensor.models.transformer import Transformer
+from tensor2tensor.models import transformer
 
 __author__ = "Surayez Rahman"
 
 
-def build_model(input_shape):
-    n_feature_maps = 64
-    n_hidden = 64
+# # Ref: https://github.com/tensorflow/tensor2tensor/issues/813
+# def transformer_code(inputLayer):
+#     hparams = transformer.transformer_base()
+#     encoder = transformer.TransformerEncoder(hparams, mode=tf.estimator.ModeKeys.TRAIN)
+#     x = keras.backend.expand_dims(inputLayer, axis=2)
+#     y = encoder({"inputs": x, "targets": 0, "target_space_id": 0})
+#     y = keras.backend.squeeze(y[0], 2)
+#     return y
+#     # inputAfterDense = keras.layers.Dense(512, activation='relu')(inputLayer)
+#     # y = keras.layers.Lambda(transformer_code)(inputAfterDense)
 
+
+# Ref: https://stackoverflow.com/questions/59718635/how-to-use-tf-lambda-and-tf-variable-at-tensorflow-2-0
+class TransformerLayer(layers.Layer):
+    def __init__(self):
+        super(TransformerLayer, self).__init__()
+
+    def call(self, inputs, **kwargs):
+        hparams = transformer.transformer_base()
+        encoder = transformer.TransformerEncoder(hparams, mode=tf.estimator.ModeKeys.TRAIN)
+        x = keras.backend.expand_dims(inputs, axis=2)
+        y = encoder({"inputs": x, "targets": 0, "target_space_id": 0})
+        y = keras.backend.squeeze(y[0], 2)
+        return y
+
+
+def build_model(input_shape):
     main_input = keras.layers.Input(input_shape)
     input_layer = keras.layers.Input((input_shape[1], input_shape[2]))
 
-    # BLOCK 1
-    conv_x = keras.layers.Conv1D(filters=n_feature_maps, kernel_size=8, padding='same')(input_layer)
-    conv_x = keras.layers.normalization.BatchNormalization()(conv_x)
-    conv_x = keras.layers.Activation('relu')(conv_x)
+    conv1 = keras.layers.Conv1D(filters=128, kernel_size=8, padding='same')(input_layer)
+    conv1 = keras.layers.normalization.BatchNormalization()(conv1)
+    conv1 = keras.layers.Activation(activation='relu')(conv1)
 
-    conv_y = keras.layers.Conv1D(filters=n_feature_maps, kernel_size=5, padding='same')(conv_x)
-    conv_y = keras.layers.normalization.BatchNormalization()(conv_y)
-    conv_y = keras.layers.Activation('relu')(conv_y)
+    conv2 = keras.layers.Conv1D(filters=256, kernel_size=5, padding='same')(conv1)
+    conv2 = keras.layers.normalization.BatchNormalization()(conv2)
+    conv2 = keras.layers.Activation('relu')(conv2)
 
-    conv_z = keras.layers.Conv1D(filters=n_feature_maps, kernel_size=3, padding='same')(conv_y)
-    conv_z = keras.layers.normalization.BatchNormalization()(conv_z)
+    conv3 = keras.layers.Conv1D(128, kernel_size=3, padding='same')(conv2)
+    conv3 = keras.layers.normalization.BatchNormalization()(conv3)
+    conv3 = keras.layers.Activation('relu')(conv3)
 
-    # expand channels for the sum
-    shortcut_y = keras.layers.Conv1D(filters=n_feature_maps, kernel_size=1, padding='same')(input_layer)
-    shortcut_y = keras.layers.normalization.BatchNormalization()(shortcut_y)
-
-    output_block_1 = keras.layers.add([shortcut_y, conv_z])
-    output_block_1 = keras.layers.Activation('relu')(output_block_1)
-
-    # BLOCK 2
-    conv_x = keras.layers.Conv1D(filters=n_feature_maps * 2, kernel_size=8, padding='same')(output_block_1)
-    conv_x = keras.layers.normalization.BatchNormalization()(conv_x)
-    conv_x = keras.layers.Activation('relu')(conv_x)
-
-    conv_y = keras.layers.Conv1D(filters=n_feature_maps * 2, kernel_size=5, padding='same')(conv_x)
-    conv_y = keras.layers.normalization.BatchNormalization()(conv_y)
-    conv_y = keras.layers.Activation('relu')(conv_y)
-
-    conv_z = keras.layers.Conv1D(filters=n_feature_maps * 2, kernel_size=3, padding='same')(conv_y)
-    conv_z = keras.layers.normalization.BatchNormalization()(conv_z)
-
-    # expand channels for the sum
-    shortcut_y = keras.layers.Conv1D(filters=n_feature_maps * 2, kernel_size=1, padding='same')(output_block_1)
-    shortcut_y = keras.layers.normalization.BatchNormalization()(shortcut_y)
-
-    output_block_2 = keras.layers.add([shortcut_y, conv_z])
-    output_block_2 = keras.layers.Activation('relu')(output_block_2)
-
-    # BLOCK 3
-
-    conv_x = keras.layers.Conv1D(filters=n_feature_maps * 2, kernel_size=8, padding='same')(output_block_2)
-    conv_x = keras.layers.normalization.BatchNormalization()(conv_x)
-    conv_x = keras.layers.Activation('relu')(conv_x)
-
-    conv_y = keras.layers.Conv1D(filters=n_feature_maps * 2, kernel_size=5, padding='same')(conv_x)
-    conv_y = keras.layers.normalization.BatchNormalization()(conv_y)
-    conv_y = keras.layers.Activation('relu')(conv_y)
-
-    conv_z = keras.layers.Conv1D(filters=n_feature_maps * 2, kernel_size=3, padding='same')(conv_y)
-
-    conv_z = keras.layers.normalization.BatchNormalization()(conv_z)
-    shortcut_y = keras.layers.normalization.BatchNormalization()(output_block_2)
-
-    output_block_3 = keras.layers.add([shortcut_y, conv_z])
-    output_block_3 = keras.layers.Activation('relu')(output_block_3)
-    print(output_block_3)
-
-    # FINAL
-
-    gap_layerX = keras.layers.GlobalAveragePooling1D()(output_block_3)
-    print(gap_layerX)
-
-    # output_layer = keras.layers.Dense(n_feature_maps, activation='relu')(output_block_3)
-    # output_layer = keras.layers.Dense(2, activation='softmax')(output_layer)
-    # print(output_layer)
-
-    # model = keras.models.Model(inputs=main_input, outputs=output_layer)
-
-    cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layerX))(main_input)
-    print(cnn_model)
-
-    # ATTENTION BLOCK STARTS
-
-    output_shape = 2
-    output_train = keras.layers.Input(output_shape)
-
-    # ENCODER [Encodes input to hidden states]
-    encoder_stack_h, encoder_last_h, encoder_last_c = keras.layers.LSTM(n_hidden, activation='sigmoid',
-                                                                        return_state=True,
-                                                                        return_sequences=True)(cnn_model)
-
-    encoder_stack_h, encoder_last_h, encoder_last_c, x, y = keras.layers.Bidirectional(keras.layers.LSTM(n_hidden, activation='sigmoid',
-                                                                        return_state=True,
-                                                                        return_sequences=True))(cnn_model)
-
-    # Returns hidden state stacks and last hidden states
-    print(encoder_stack_h)
-    print(encoder_last_h)
-    print(encoder_last_c)
-
-    # Last hidden states are normalised to prevent gradient explosion
-    encoder_last_h = keras.layers.BatchNormalization(momentum=0.6)(encoder_last_h)
-    encoder_last_c = keras.layers.BatchNormalization(momentum=0.6)(encoder_last_c)
-    print(encoder_last_h)
-    print(encoder_last_c)
-
-    # The last hidden state is repeated the number of time the output needs to be predicted
-    decoder_input = keras.layers.RepeatVector(output_train.shape[1])(encoder_last_h)
-    print(decoder_input)
-
-    # DECODER [Decodes the last encoded hidden state to get alignment scoring]
-    # decoder_stack_h = keras.layers.LSTM(n_hidden, activation='sigmoid',
-    #                                     return_state=False, return_sequences=True)(decoder_input,
-    #                                                                                initial_state=[encoder_last_h,
-    #                                                                                               encoder_last_c])
-
-    decoder_stack_h = keras.layers.Bidirectional(keras.layers.LSTM(n_hidden, activation='sigmoid',
-                                        return_state=False, return_sequences=True))(decoder_input)
-
-    print(decoder_stack_h)
-
-    # ATTENTION LAYER
-    # Calculates alignment scores, then softmax func
-    attention = keras.layers.dot([decoder_stack_h, encoder_stack_h], axes=[2, 2])
-    attention = keras.layers.Activation('softmax')(attention)
-    print(attention)
-
-    # Use the output of Attention to build the context layer
-    context = keras.layers.dot([attention, encoder_stack_h], axes=[2, 1])
-    context = keras.layers.BatchNormalization(momentum=0.6)(context)
-    print(context)
-
-    # Concatenating the context vector and stacked hidden states of decoder
-    decoder_combined_context = keras.layers.concatenate([context, decoder_stack_h])
-    print(decoder_combined_context)
-
-    gap_layer = keras.layers.GlobalAveragePooling1D()(context)
+    gap_layer = keras.layers.pooling.GlobalAveragePooling1D()(conv3)
     print(gap_layer)
 
-    out = keras.layers.Dense(output_train.shape[1])(gap_layer)
-    print(out)
+    cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layer))(main_input)
 
-    model = keras.models.Model(inputs=main_input, outputs=out)
-    model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
+    # lstm_layer = keras.layers.LSTM(64, return_sequences=True)(cnn_model)
+    # lstm_layer = keras.layers.LSTM(64)(lstm_layer)
+
+    # Transformation Layer
+    inputAfterDense = keras.layers.Dense(512, activation='relu')(cnn_model)
+    print(inputAfterDense)
+    transformer_layer = TransformerLayer()(inputAfterDense)
+    print(transformer_layer)
+
+    gap_layer1 = keras.layers.pooling.GlobalAveragePooling1D()(transformer_layer)
+    print(gap_layer1)
+
+    output_layer = keras.layers.Dense(64, activation='relu')(gap_layer1)
+    output_layer = keras.layers.Dense(2, activation='softmax')(output_layer)
+
+    model = keras.models.Model(inputs=main_input, outputs=output_layer)
     model.summary()
-
     return model
 
 

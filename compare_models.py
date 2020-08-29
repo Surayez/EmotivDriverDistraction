@@ -224,8 +224,8 @@ def prepare_data_cnn_lstm(window_len, stride, binary):
 if __name__ == "__main__":
     problem = "Emotiv266"
     # classifier_names = ["attention_bidirectional", "attention_resnet", "attention_fcn", "resnet_lstm"]
-    classifier_names = ["multiheadattention_fcn"]
-    epoch = 3
+    classifier_names = ["multiheadattention_fcn", "multiheadattention_resnet", "resnet_lstm"]
+    epoch = 100
     window_len = 40
     stride = 20
     binary = True
