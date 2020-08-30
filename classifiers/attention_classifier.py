@@ -22,26 +22,25 @@ class Classifier_Attention:
         self.verbose = verbose
         self.output_directory = output_directory
 
-
         # UPDATE the following line to use desired model
-        if (classifier_name == "attention_bidirectional"):
+        if classifier_name == "attention_bidirectional":
             self.model = attention_model_bidirectional.build_model(input_shape)
-        elif (classifier_name == "attention_resnet"):
+        elif classifier_name == "attention_resnet":
             self.model = attention_model_resnet.build_model(input_shape)
-        elif (classifier_name == "attention_fcn"):
+        elif classifier_name == "attention_fcn":
             self.model = attention_model_fcn.build_model(input_shape)
-        elif (classifier_name == "multiheadattention_model"):
+        elif classifier_name == "MHA":
             self.model = multiheadattention_model.build_model(input_shape)
-        elif (classifier_name == "selfattention_fcn"):
+        elif classifier_name == "SA_FCN":
             self.model = selfattention_fcn.build_model(input_shape)
-        elif (classifier_name == "selfattention_resnet"):
+        elif classifier_name == "SA_ResNet":
             self.model = selfattention_resnet.build_model(input_shape)
-        elif (classifier_name == "multiheadattention_fcn"):
+        elif classifier_name == "MHA_FCN":
             self.model = multiheadattention_fcn.build_model(input_shape)
-        elif (classifier_name == "multiheadattention_resnet"):
+        elif classifier_name == "MHA_ResNet":
             self.model = multiheadattention_resnet.build_model(input_shape)
         else:
-            self.model = attention_experiment.build_model(input_shape)
+            self.model = attention_model.build_model(input_shape)
 
         if verbose:
             self.model.summary()
@@ -97,10 +96,10 @@ class Classifier_Attention:
         if self.verbose:
             print('[' + self.classifier_name + '] Predicting')
 
-        if ("selfattention" in self.classifier_name):
+        if ("SA" in self.classifier_name):
             model = keras.models.load_model(self.output_directory + 'best_model.h5',
                                             custom_objects={'SeqSelfAttention': SeqSelfAttention})
-        elif ("multihead" in self.classifier_name):
+        elif ("MHA" in self.classifier_name):
             model = keras.models.load_model(self.output_directory + 'best_model.h5',
                                             custom_objects={'MultiHeadAttention': MultiHeadAttention})
         else:
