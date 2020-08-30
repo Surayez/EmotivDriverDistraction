@@ -78,3 +78,57 @@
 # if __name__ == "__main__":
 #     input_shape = (None, 40, 266)
 #     attn_model = build_model(input_shape)
+#
+# from matplotlib import pyplot as plt
+# import numpy as np
+#
+#
+# def graph_label(rects):
+#     # Ref: https://matplotlib.org/3.2.1/gallery/lines_bars_and_markers/barchart.html
+#     for rect in rects:
+#         height = rect.get_height()
+#         plt.annotate('{}'.format(height),
+#                      xy=(rect.get_x() + rect.get_width() / 2, height),
+#                      xytext=(0, 3),  # 3 points vertical offset
+#                      textcoords="offset points",
+#                      ha='center', va='bottom')
+#
+#
+# def results_chart(classifier_names, train, test, val):
+#     train = list(np.around(np.array(train), 2))
+#     test = list(np.around(np.array(test), 2))
+#     val = list(np.around(np.array(val), 2))
+#
+#     N = len(classifier_names)
+#     ind = np.arange(N)
+#     width = 0.25
+#
+#     rects1 = plt.bar(ind, train, width, label='Train')
+#     rects2 = plt.bar(ind + width, val, width, label='Val')
+#     rects3 = plt.bar(ind + width * 2, test, width, label='Test')
+#
+#     plt.ylabel('Scores')
+#     plt.title('Scores by Train/Val/Test')
+#
+#     plt.xticks(ind + width / 2, classifier_names)
+#     plt.legend(loc='best')
+#
+#     graph_label(rects1)
+#     graph_label(rects2)
+#     graph_label(rects3)
+#
+#     plt.savefig("result_bar.png")
+#     plt.show()
+#     plt.close()
+#
+#
+# classifier_names = ["MHA_FCN", "SA_FCN", "MHA_ResNet", "SA_FCN", "ResNet_LSTM"]
+# result_train = [99.48193411264612,99.2029755579171,99.16312433581297,96.74548352816153,97.67534537725824]
+# result_test = [64.02985074626866,64.37810945273633,62.189054726368155,64.92537313432835,60.34825870646766]
+# result_val = [76.88442211055276,71.65829145728642,68.64321608040201,68.74371859296483,68.04020100502512]
+# results_chart(classifier_names, result_train, result_test, result_val)
+# a_string = "MHA_ResNet"
+# matches = ["MHA", "Attention"]
+#
+# if any(x in a_string for x in matches):
+#     print("Exists")

@@ -1,11 +1,11 @@
-import os
 import csv
+import os
 import numpy as np
 import pandas as pd
-from utils import data_loader
-from utils.classifier_tools import prepare_inputs_deep_learning, prepare_inputs, prepare_inputs_cnn_lstm
-from utils.tools import create_directory
 from matplotlib import pyplot as plt
+from utils import data_loader
+from utils.classifier_tools import prepare_inputs, prepare_inputs_cnn_lstm
+from utils.tools import create_directory
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
@@ -38,9 +38,14 @@ def graph_label(rects):
 
 
 def results_chart(classifier_names, train, test, val):
+    train = list(np.around(np.array(train), 2))
+    test = list(np.around(np.array(test), 2))
+    val = list(np.around(np.array(val), 2))
+
     N = len(classifier_names)
     ind = np.arange(N)
-    width = 0.2
+    width = 0.25
+
     rects1 = plt.bar(ind, train, width, label='Train')
     rects2 = plt.bar(ind + width, val, width, label='Val')
     rects3 = plt.bar(ind + width * 2, test, width, label='Test')
@@ -63,7 +68,8 @@ def results_chart(classifier_names, train, test, val):
 def fit_classifier(classifier_name, epoch, output_directory, all_labels, x_train, y_train, X_val=None, y_val=None):
     nb_classes = len(np.unique(all_labels))
 
-    if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or ("attention" in classifier_name):
+    # if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or ("attention" in classifier_name):
+    if any(x in classifier_name for x in ["fcn_lstm", "resnet_lstm", "attention", "SA", "MHA"]):
         input_shape = (None, x_train.shape[2], x_train.shape[3])
     else:
         input_shape = (x_train.shape[1], x_train.shape[2])
@@ -78,7 +84,7 @@ def fit_classifier(classifier_name, epoch, output_directory, all_labels, x_train
 
 
 def create_classifier(classifier_name, output_directory, input_shape, nb_classes, epoch, verbose=True):
-    if "attention" in classifier_name:
+    if any(x in classifier_name for x in ["attention", "SA", "MHA"]):
         from classifiers import attention_classifier
         return attention_classifier.Classifier_Attention(classifier_name, output_directory, input_shape, epoch, verbose)
     if classifier_name == 'resnet':
@@ -205,12 +211,6 @@ def prepare_data_cnn_lstm(window_len, stride, binary):
                                                                              stride=stride,
                                                                              binary=binary)
 
-    #     X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_deep_learning(train_inputs=train_data,
-    #                                                                                   test_inputs=test_data,
-    #                                                                                   window_len=window_len,
-    #                                                                                   stride=stride,
-    #                                                                                   binary=binary)
-
     print("[Compare_Models] Train series:", X_train.shape)
     if X_val is not None:
         print("[Compare_Models] Val series:", X_val.shape)
@@ -233,8 +233,8 @@ def prepare_data_cnn_lstm(window_len, stride, binary):
 
 if __name__ == "__main__":
     problem = "Emotiv266"
-    classifier_names = ["multiheadattention_fcn", "selfattention_fcn", "multiheadattention_resnet", "selfattention_resnet" "resnet_lstm"]
-    epoch = 50
+    classifier_names = ["MHA_FCN", "SA_FCN", "MHA_ResNet", "SA_FCN", "resnet_lstm"]
+    epoch = 5
     window_len = 40
     stride = 20
     binary = True
