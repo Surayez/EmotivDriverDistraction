@@ -2,11 +2,10 @@ import os
 import csv
 import numpy as np
 import pandas as pd
-from plotly.offline import plot
 from utils import data_loader
 from utils.classifier_tools import prepare_inputs_deep_learning, prepare_inputs, prepare_inputs_cnn_lstm
 from utils.tools import create_directory
-import plotly.graph_objs as go
+from matplotlib import pyplot as plt
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
@@ -27,27 +26,38 @@ def results_table(classifier_names, train, test, val):
     table.close()
 
 
+def graph_label(rects):
+    # Ref: https://matplotlib.org/3.2.1/gallery/lines_bars_and_markers/barchart.html
+    for rect in rects:
+        height = rect.get_height()
+        plt.annotate('{}'.format(height),
+                     xy=(rect.get_x() + rect.get_width() / 2, height),
+                     xytext=(0, 3),  # 3 points vertical offset
+                     textcoords="offset points",
+                     ha='center', va='bottom')
+
+
 def results_chart(classifier_names, train, test, val):
-    # Create a results bar chart
-    trace1 = go.Bar(
-        x=classifier_names,
-        y=train,
-        name='Train')
+    N = len(classifier_names)
+    ind = np.arange(N)
+    width = 0.2
+    rects1 = plt.bar(ind, train, width, label='Train')
+    rects2 = plt.bar(ind + width, val, width, label='Val')
+    rects3 = plt.bar(ind + width * 2, test, width, label='Test')
 
-    trace2 = go.Bar(
-        x=classifier_names,
-        y=test,
-        name='Val')
+    plt.ylabel('Scores')
+    plt.title('Scores by Train/Val/Test')
 
-    trace3 = go.Bar(
-        x=classifier_names,
-        y=val,
-        name='Test')
+    plt.xticks(ind + width / 2, classifier_names)
+    plt.legend(loc='best')
 
-    data = [trace1, trace2, trace3]
-    layout = go.Layout(barmode='group')
-    fig = go.Figure(data=data, layout=layout)
-    plot(fig)
+    graph_label(rects1)
+    graph_label(rects2)
+    graph_label(rects3)
+
+    plt.savefig("result_bar.png")
+    plt.show()
+    plt.close()
 
 
 def fit_classifier(classifier_name, epoch, output_directory, all_labels, x_train, y_train, X_val=None, y_val=None):
@@ -223,9 +233,8 @@ def prepare_data_cnn_lstm(window_len, stride, binary):
 
 if __name__ == "__main__":
     problem = "Emotiv266"
-    # classifier_names = ["attention_bidirectional", "attention_resnet", "attention_fcn", "resnet_lstm"]
-    classifier_names = ["multiheadattention_fcn", "multiheadattention_resnet", "resnet_lstm"]
-    epoch = 100
+    classifier_names = ["multiheadattention_fcn", "selfattention_fcn", "multiheadattention_resnet", "selfattention_resnet" "resnet_lstm"]
+    epoch = 50
     window_len = 40
     stride = 20
     binary = True
