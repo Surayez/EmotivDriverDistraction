@@ -233,8 +233,8 @@ def prepare_data_cnn_lstm(window_len, stride, binary):
 
 if __name__ == "__main__":
     problem = "Emotiv266"
-    classifier_names = ["MHA_FCN", "SA_FCN", "MHA_ResNet", "SA_FCN", "resnet_lstm"]
-    epoch = 1
+    classifier_names = ["MHA_FCN", "SA_FCN", "MHA_ResNet", "SA_FCN", "resnet_lstm", "fcn_lstm"]
+    epoch = 100
     window_len = 40
     stride = 20
     binary = True

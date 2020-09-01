@@ -1,6 +1,12 @@
-from .backend import keras, TF_KERAS
-from .backend import backend as K
+from .utilities import keras, TF_KERAS
+from .utilities import backend as K
 from keras_self_attention import ScaledDotProductAttention
+
+"""
+Owner: CyberZHG
+Reference: https://github.com/CyberZHG/keras-multi-head
+Original Paper: https://arxiv.org/pdf/1706.03762.pdf
+"""
 
 
 class MultiHeadAttention(keras.layers.Layer):

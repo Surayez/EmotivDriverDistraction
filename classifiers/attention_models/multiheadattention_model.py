@@ -1,6 +1,7 @@
 import keras
-# from keras_multi_head import MultiHeadAttention
 from .attention_implements.MultiHeadAttention import MultiHeadAttention
+
+__author__ = "Surayez Rahman"
 
 
 def build_model(input_shape):

@@ -1,6 +1,11 @@
 import os
 from distutils.util import strtobool
 
+"""
+Owner: CyberZHG
+Reference: https://github.com/CyberZHG/
+"""
+
 __all__ = [
     'keras', 'utils', 'activations', 'applications', 'backend', 'datasets',
     'layers', 'preprocessing', 'wrappers', 'callbacks', 'constraints', 'initializers',

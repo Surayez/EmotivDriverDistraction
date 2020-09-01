@@ -1,6 +1,7 @@
 import keras
-# from keras_self_attention import SeqSelfAttention
 from .attention_implements.SeqSelfAttention import SeqSelfAttention
+
+__author__ = "Surayez Rahman"
 
 
 def build_model(input_shape):

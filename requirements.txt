@@ -48,5 +48,3 @@ urllib3==1.25.10
 Werkzeug==1.0.1
 wrapt==1.12.1
 imblearn==0.0
-keras-multi-head==0.27.0
-keras-self-attention==0.46.0
