@@ -1,5 +1,6 @@
 import keras
-from keras_self_attention import SeqSelfAttention
+# from keras_self_attention import SeqSelfAttention
+from .attention_implements.SeqSelfAttention import SeqSelfAttention
 
 
 def build_model(input_shape):

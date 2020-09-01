@@ -1,3 +1,121 @@
+import keras
+from keras_multi_head import MultiHeadAttention
+
+
+def build_model(input_shape):
+    n_feature_maps = 64
+
+    main_input = keras.layers.Input(input_shape)
+    input_layer = keras.layers.Input((input_shape[1], input_shape[2]))
+
+    # add model layers
+    # BLOCK 1
+    conv_x = keras.layers.Conv1D(filters=n_feature_maps,
+                                 kernel_size=8,
+                                 padding='same')(input_layer)
+    conv_x = keras.layers.normalization.BatchNormalization()(conv_x)
+    conv_x = keras.layers.Activation('relu')(conv_x)
+
+    conv_y = keras.layers.Conv1D(filters=n_feature_maps,
+                                 kernel_size=5,
+                                 padding='same')(conv_x)
+    conv_y = keras.layers.normalization.BatchNormalization()(conv_y)
+    conv_y = keras.layers.Activation('relu')(conv_y)
+
+    conv_z = keras.layers.Conv1D(filters=n_feature_maps,
+                                 kernel_size=3,
+                                 padding='same')(conv_y)
+    conv_z = keras.layers.normalization.BatchNormalization()(conv_z)
+
+    # expand channels for the sum
+    shortcut_y = keras.layers.Conv1D(filters=n_feature_maps,
+                                     kernel_size=1,
+                                     padding='same')(input_layer)
+    shortcut_y = keras.layers.normalization.BatchNormalization()(shortcut_y)
+
+    output_block_1 = keras.layers.add([shortcut_y, conv_z])
+    output_block_1 = keras.layers.Activation('relu')(output_block_1)
+
+    # BLOCK 2
+    conv_x = keras.layers.Conv1D(filters=n_feature_maps * 2,
+                                 kernel_size=8,
+                                 padding='same')(output_block_1)
+    conv_x = keras.layers.normalization.BatchNormalization()(conv_x)
+    conv_x = keras.layers.Activation('relu')(conv_x)
+
+    conv_y = keras.layers.Conv1D(filters=n_feature_maps * 2,
+                                 kernel_size=5,
+                                 padding='same')(conv_x)
+    conv_y = keras.layers.normalization.BatchNormalization()(conv_y)
+    conv_y = keras.layers.Activation('relu')(conv_y)
+
+    conv_z = keras.layers.Conv1D(filters=n_feature_maps * 2,
+                                 kernel_size=3,
+                                 padding='same')(conv_y)
+    conv_z = keras.layers.normalization.BatchNormalization()(conv_z)
+
+    # expand channels for the sum
+    shortcut_y = keras.layers.Conv1D(filters=n_feature_maps * 2,
+                                     kernel_size=1,
+                                     padding='same')(output_block_1)
+    shortcut_y = keras.layers.normalization.BatchNormalization()(shortcut_y)
+
+    output_block_2 = keras.layers.add([shortcut_y, conv_z])
+    output_block_2 = keras.layers.Activation('relu')(output_block_2)
+
+    # BLOCK 3
+
+    conv_x = keras.layers.Conv1D(filters=n_feature_maps * 2,
+                                 kernel_size=8,
+                                 padding='same')(output_block_2)
+    conv_x = keras.layers.normalization.BatchNormalization()(conv_x)
+    conv_x = keras.layers.Activation('relu')(conv_x)
+
+    conv_y = keras.layers.Conv1D(filters=n_feature_maps * 2,
+                                 kernel_size=5,
+                                 padding='same')(conv_x)
+    conv_y = keras.layers.normalization.BatchNormalization()(conv_y)
+    conv_y = keras.layers.Activation('relu')(conv_y)
+
+    conv_z = keras.layers.Conv1D(filters=n_feature_maps * 2,
+                                 kernel_size=3,
+                                 padding='same')(conv_y)
+    conv_z = keras.layers.normalization.BatchNormalization()(conv_z)
+
+    # no need to expand channels because they are equal
+    shortcut_y = keras.layers.normalization.BatchNormalization()(output_block_2)
+
+    output_block_3 = keras.layers.add([shortcut_y, conv_z])
+    output_block_3 = keras.layers.Activation('relu')(output_block_3)
+    print(output_block_3)
+
+    # FINAL
+    gap_layer = keras.layers.GlobalAveragePooling1D()(output_block_3)
+    print(gap_layer)
+
+    cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layer))(main_input)
+    print(cnn_model)
+
+    # lstm_layer = keras.layers.Bidirectional(keras.layers.LSTM(n_feature_maps, return_sequences=True))(cnn_model)
+    lstm_layer = keras.layers.LSTM(n_feature_maps, return_sequences=True)(cnn_model)
+
+    att_layer = MultiHeadAttention(head_num=2)(lstm_layer)
+    gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(att_layer)
+
+    output_layer = keras.layers.Dense(64, activation='relu')(gap_layerX)
+    output_layer = keras.layers.Dense(2, activation='softmax')(output_layer)
+
+    model = keras.models.Model(inputs=main_input, outputs=output_layer)
+
+    model.summary()
+    return model
+
+
+if __name__== "__main__":
+    inp_shape = (None, 40, 266)
+    model = build_model(inp_shape)
+
+
 # import keras
 # import tensorflow as tf
 # from tensorflow.keras import layers
@@ -79,6 +197,7 @@
 #     input_shape = (None, 40, 266)
 #     attn_model = build_model(input_shape)
 #
+#
 # from matplotlib import pyplot as plt
 # import numpy as np
 #
@@ -123,12 +242,7 @@
 #
 #
 # classifier_names = ["MHA_FCN", "SA_FCN", "MHA_ResNet", "SA_FCN", "ResNet_LSTM"]
-# result_train = [99.48193411264612,99.2029755579171,99.16312433581297,96.74548352816153,97.67534537725824]
-# result_test = [64.02985074626866,64.37810945273633,62.189054726368155,64.92537313432835,60.34825870646766]
-# result_val = [76.88442211055276,71.65829145728642,68.64321608040201,68.74371859296483,68.04020100502512]
+# result_train = [97.2768331562168,95.73591923485654,99.17640807651435,98.87088204038257,98.81774707757704]
+# result_test = [62.039800995024876,61.64179104477612,62.7363184079602,65.5223880597015,61.54228855721393]
+# result_val = [73.86934673366834,73.66834170854271,72.36180904522614,73.76884422110552,69.64824120603015]
 # results_chart(classifier_names, result_train, result_test, result_val)
-# a_string = "MHA_ResNet"
-# matches = ["MHA", "Attention"]
-#
-# if any(x in a_string for x in matches):
-#     print("Exists")

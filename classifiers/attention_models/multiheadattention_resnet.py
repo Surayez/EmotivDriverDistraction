@@ -1,5 +1,6 @@
 import keras
-from keras_multi_head import MultiHeadAttention
+# from keras_multi_head import MultiHeadAttention
+from .attention_implements.MultiHeadAttention import MultiHeadAttention
 
 
 def build_model(input_shape):
@@ -8,7 +9,7 @@ def build_model(input_shape):
     main_input = keras.layers.Input(input_shape)
     input_layer = keras.layers.Input((input_shape[1], input_shape[2]))
 
-    # add model layers
+    # add model layerss
     # BLOCK 1
     conv_x = keras.layers.Conv1D(filters=n_feature_maps,
                                  kernel_size=8,
