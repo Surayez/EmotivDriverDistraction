@@ -1,9 +1,14 @@
-from .backend import keras
-from .backend import backend as K
+from .utilities import keras
+from .utilities import backend as K
+
+"""
+Owner: CyberZHG
+Reference: https://github.com/CyberZHG/keras-self-attention
+Original Paper: https://arxiv.org/pdf/1806.01264.pdf
+"""
 
 
 class SeqSelfAttention(keras.layers.Layer):
-
     ATTENTION_TYPE_ADD = 'additive'
     ATTENTION_TYPE_MUL = 'multiplicative'
 

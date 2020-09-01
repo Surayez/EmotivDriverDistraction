@@ -2,7 +2,7 @@ import keras
 
 __author__ = "Surayez Rahman"
 
-# Attention code taken from:
+# Reference:
 # https://levelup.gitconnected.com/building-seq2seq-lstm-with-luong-attention-in-keras-for-time-series-forecasting-1ee00958decb
 
 
