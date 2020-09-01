@@ -1,5 +1,6 @@
 import keras
-from keras_multi_head import MultiHeadAttention
+# from keras_multi_head import MultiHeadAttention
+from .attention_implements.MultiHeadAttention import MultiHeadAttention
 
 
 def build_model(input_shape):
