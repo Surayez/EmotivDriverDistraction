@@ -1,3 +1,5 @@
+import sys
+import getopt
 import csv
 import os
 import numpy as np
@@ -178,7 +180,7 @@ def run_model(classifier_name, data, epoch, window_len, stride, binary):
     return metrics
 
 
-def prepare_data_cnn_lstm(window_len, stride, binary):
+def prepare_data_cnn_lstm(problem, window_len, stride, binary):
     # Set up output location
     cwd = os.getcwd()
     data_path = cwd + "/TS_Segmentation/"
@@ -231,13 +233,34 @@ def prepare_data_cnn_lstm(window_len, stride, binary):
     return [all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory]
 
 
-if __name__ == "__main__":
+def main(argv):
     problem = "Emotiv266"
-    classifier_names = ["MHA_FCN", "SA_FCN", "MHA_ResNet", "SA_FCN", "resnet_lstm", "fcn_lstm"]
-    epoch = 100
+    classifier_names = ["MHA_ResNet", "MHA_FCN", "SA_FCN", "SA_FCN", "resnet_lstm", "fcn_lstm"]
+    epoch = 1
     window_len = 40
+    # window_len = 256
+    # stride = 128
     stride = 20
     binary = True
+
+    # Command line args
+    try:
+        opts, args = getopt.getopt(argv, "p:c:e:", ["problem=", "classifier=", "epoch="])
+    except getopt.GetoptError:
+        print("Incorrect arguments passed")
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt in ("-p", "--problem"):
+            problem = arg
+        elif opt in ("-c", "--classifier"):
+            classifier = arg
+            classifier_names = classifier.split(',')
+        elif opt in ("-e", "--epoch"):
+            epoch = arg
+
+    # Print runtime information
+    print("Problem:", problem, "\nClassifiers:", classifier_names, "\nEpochs:", epoch)
 
     # Prepare results arrays
     result_train = []
@@ -245,7 +268,7 @@ if __name__ == "__main__":
     result_val = []
 
     # Prepare Data
-    data = prepare_data_cnn_lstm(window_len, stride, binary)
+    data = prepare_data_cnn_lstm(problem, window_len, stride, binary)
 
     for classifier_name in classifier_names:
         # Run each Model
@@ -258,3 +281,7 @@ if __name__ == "__main__":
 
     results_table(classifier_names, result_train, result_test, result_val)
     results_chart(classifier_names, result_train, result_test, result_val)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
