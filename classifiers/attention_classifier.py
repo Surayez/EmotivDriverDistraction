@@ -99,7 +99,7 @@ class Classifier_Attention:
         if ("SA" in self.classifier_name):
             model = keras.models.load_model(self.output_directory + 'best_model.h5',
                                             custom_objects={'SeqSelfAttention': SeqSelfAttention})
-        elif ("MHA" in self.classifier_name):
+        elif ("MHA" in self.classifier_name or "experiment" in self.classifier_name):
             model = keras.models.load_model(self.output_directory + 'best_model.h5',
                                             custom_objects={'MultiHeadAttention': MultiHeadAttention})
         else:
