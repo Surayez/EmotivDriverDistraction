@@ -1,6 +1,6 @@
 import keras
-from .attention_implements.MultiHeadAttention import MultiHeadAttention
-# from keras_multi_head import MultiHeadAttention
+# from .attention_implements.MultiHeadAttention import MultiHeadAttention
+from keras_multi_head import MultiHeadAttention
 
 __author__ = "Surayez Rahman"
 
@@ -100,9 +100,9 @@ def build_model(input_shape):
     print(cnn_model)
 
     # lstm_layer = keras.layers.Bidirectional(keras.layers.LSTM(n_feature_maps, return_sequences=True))(cnn_model)
-    lstm_layer = keras.layers.LSTM(n_feature_maps, return_sequences=True)(cnn_model)
+    lstm_layer = keras.layers.LSTM(128, return_sequences=True)(cnn_model)
 
-    att_layer = MultiHeadAttention(head_num=2)(lstm_layer)
+    att_layer = MultiHeadAttention(head_num=128)(lstm_layer)
     gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(att_layer)
 
     output_layer = keras.layers.Dense(64, activation='relu')(gap_layerX)
