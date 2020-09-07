@@ -40,7 +40,7 @@ class Classifier_Attention:
         elif classifier_name == "MHA_ResNet":
             self.model = multiheadattention_resnet.build_model(input_shape)
         else:
-            self.model = attention_model.build_model(input_shape)
+            self.model = attention_experiment.build_model(input_shape)
 
         if verbose:
             self.model.summary()
