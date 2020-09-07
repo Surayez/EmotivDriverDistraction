@@ -235,7 +235,7 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary):
 
 def main(argv):
     problem = "Emotiv266"
-    classifier_names = ["attention_experiment", "MHA_ResNet"]
+    classifier_names = ["MHA", "MHA_ResNet"]
     epoch = 5
     window_len = 40
     # window_len = 256
