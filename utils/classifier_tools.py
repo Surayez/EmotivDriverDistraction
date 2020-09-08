@@ -244,11 +244,16 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
     for i in train_series:
         this_series = train_inputs.data[i]
         this_series_labels = train_inputs.label[i]
-        subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
-                                                       window_size=larger_window,
-                                                       stride=stride,
-                                                       binary=binary,
-                                                       class_one=class_one)
+        # subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
+        #                                                window_size=larger_window,
+        #                                                stride=stride,
+        #                                                binary=binary,
+        #                                                class_one=class_one)
+        subsequences, sub_label = extract_trimmed_subsequences(this_series, this_series_labels,
+                                                               window_size=larger_window,
+                                                               stride=stride,
+                                                               binary=binary,
+                                                               class_one=class_one)
         [X_train.append(x) for x in subsequences]
         [y_train.append(x) for x in sub_label]
 
@@ -376,6 +381,49 @@ def extract_subsequences_attention(X_data, y_data, window_size=30, stride=1, bin
         count += 1
 
     return np.array(subsequences), np.array(next_subsequences)
+
+
+def extract_trimmed_subsequences(X_data, y_data, window_size=30, stride=1, binary=True, class_one=None, norm=True):
+    # This function extract subsequences from a long time series.
+    # Assumes that each timestamp has a label represented by y_data.
+    # The label for each subsequence is taken with the majority class in that segment.
+    if class_one is None:
+        class_one = [3, 11]
+    data_len, data_dim = X_data.shape
+
+    subsequences = []
+    labels = []
+    count = 0
+    for i in range(0, data_len, stride):
+        end = i + window_size
+        if end > data_len:
+            break
+        consistent_labels = checkSame(y_data[i:end])
+        if consistent_labels:
+            label = stats.mode(y_data[i:end]).mode[0]
+            # label = stats.mode(y_data[i:end]).mode[0]
+            tmp = X_data[i:end, :]
+            if norm:
+                # usually z-normalisation is required for TSC
+                scaler = StandardScaler()
+                tmp = scaler.fit_transform(tmp)
+            subsequences.append(tmp)
+            if binary:
+                label = make_binary(label, class_one=class_one)
+            labels.append(label)
+
+            count += 1
+
+    return np.array(subsequences), np.array(labels)
+
+
+def checkSame(iterator):
+    iterator = iter(iterator)
+    try:
+        first = next(iterator)
+    except StopIteration:
+        return True
+    return all(first == rest for rest in iterator)
 
 
 def extract_subsequences(X_data, y_data, window_size=30, stride=1, binary=True, class_one=None, norm=True):
