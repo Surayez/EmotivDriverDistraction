@@ -180,7 +180,7 @@ def run_model(classifier_name, data, epoch, window_len, stride, binary):
     return metrics
 
 
-def prepare_data_cnn_lstm(problem, window_len, stride, binary):
+def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
     # Set up output location
     cwd = os.getcwd()
     data_path = cwd + "/TS_Segmentation/"
@@ -211,7 +211,8 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary):
                                                                              test_inputs=test_data,
                                                                              window_len=window_len,
                                                                              stride=stride,
-                                                                             binary=binary)
+                                                                             binary=binary,
+                                                                             data_version=data_version)
 
     print("[Compare_Models] Train series:", X_train.shape)
     if X_val is not None:
@@ -235,12 +236,14 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary):
 
 def main(argv):
     problem = "Emotiv266"
-    classifier_names = ["MHA", "MHA_ResNet"]
+    classifier_names = ["MHA_ResNet", "attention_experiment"]
     epoch = 5
     window_len = 40
+    stride = 20
+    data_version = "enhanced"
+    # # For EmotivRaw:
     # window_len = 256
     # stride = 128
-    stride = 20
     binary = True
 
     # Command line args
@@ -268,7 +271,7 @@ def main(argv):
     result_val = []
 
     # Prepare Data
-    data = prepare_data_cnn_lstm(problem, window_len, stride, binary)
+    data = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version)
 
     for classifier_name in classifier_names:
         # Run each Model
