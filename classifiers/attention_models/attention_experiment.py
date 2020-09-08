@@ -1,4 +1,5 @@
 import keras
+# from .attention_implements.MultiHeadAttention import MultiHeadAttention
 from keras_multi_head import MultiHeadAttention
 
 __author__ = "Surayez Rahman"
@@ -98,11 +99,14 @@ def build_model(input_shape):
     cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layer))(main_input)
     print(cnn_model)
 
-    # lstm_layer = keras.layers.Bidirectional(keras.layers.LSTM(n_feature_maps, return_sequences=True))(cnn_model)
+    lstm_layer = keras.layers.Bidirectional(keras.layers.LSTM(n_feature_maps, return_sequences=True))(cnn_model)
     # lstm_layer = keras.layers.LSTM(n_feature_maps, return_sequences=True)(cnn_model)
 
-    att_layer = MultiHeadAttention(head_num=8)(cnn_model)
-    gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(att_layer)
+    att_layer = MultiHeadAttention(head_num=128)(lstm_layer)
+
+    lstm_layer = keras.layers.LSTM(128, return_sequences=True)(att_layer)
+
+    gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(lstm_layer)
 
     output_layer = keras.layers.Dense(64, activation='relu')(gap_layerX)
     output_layer = keras.layers.Dense(2, activation='softmax')(output_layer)
