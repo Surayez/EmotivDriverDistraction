@@ -89,7 +89,6 @@ def build_model(input_shape):
                                                                         return_state=True,
                                                                         return_sequences=True)(cnn_model)
 
-
     # Returns hidden state stacks and last hidden states
     print(encoder_stack_h)
     print(encoder_last_h)
@@ -138,7 +137,6 @@ def build_model(input_shape):
     model.summary()
 
     return model
-
 
 
 if __name__ == "__main__":
