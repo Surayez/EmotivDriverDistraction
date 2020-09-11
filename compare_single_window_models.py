@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from utils import data_loader
-from utils.classifier_tools import prepare_inputs, prepare_inputs_cnn_lstm
+from utils.classifier_tools import prepare_inputs, prepare_inputs_cnn_lstm, prepare_inputs_deep_learning
 from utils.tools import create_directory
 
 pd.set_option('display.max_rows', 500)
@@ -213,6 +213,12 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
                                                                              stride=stride,
                                                                              binary=binary,
                                                                              data_version=data_version)
+
+    X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_deep_learning(train_inputs=train_data,
+                                                                                  test_inputs=test_data,
+                                                                                  window_len=window_len,
+                                                                                  stride=stride,
+                                                                                  binary=binary)
 
     print("[Compare_Models] Train series:", X_train.shape)
     if X_val is not None:

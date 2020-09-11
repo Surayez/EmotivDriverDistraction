@@ -230,7 +230,7 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
     #   verbose:        verbosity
 
     if class_one is None:
-        class_one = [3, 11]
+        class_one = [1, 2, 3, 11]
     n_length = window_len
     larger_window = window_len * n_subs
     if verbose > 0:
@@ -271,6 +271,7 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
     # Up-sampling data
     X_train, y_train = up_sample(X_train, y_train)
 
+    # Magic happens here
     X_train = X_train.reshape((X_train.shape[0], n_subs, n_length, X_train.shape[2]))
 
     X_val = []

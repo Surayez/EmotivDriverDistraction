@@ -90,6 +90,8 @@ class Classifier_ResNet:
 
         gap_layer = keras.layers.GlobalAveragePooling1D()(output_block_3)
 
+        # LSTM - Attention - LSTM
+
         output_layer = keras.layers.Dense(nb_classes, activation='softmax')(gap_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
