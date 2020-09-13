@@ -311,6 +311,108 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
     return X_train, y_train, X_val, y_val, X_test, y_test
 
 
+def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
+                            val_size=2, random_state=1234, n_subs=4, binary=True, class_one=None, verbose=1, data_version=""):
+    # This function prepare the inputs to have the right shape for deep learning attention_models specifically CNN-LSTM attention_models.
+    # The idea is to get n_subs subsequences of length=window_len, pass each of them to a CNN for features and
+    # learn the relationship with past subsequences using LSTM.
+    # The shape we are after is (n_series, n_subs, series_len, series_dim)
+    # Inputs are df with data and label columns
+    # Inputs:
+    #   train_inputs:   training dataset
+    #   test_inputs:    test dataset
+    #   window_len:     subsequence window size
+    #   stride:         stride
+    #   val_size:       number of series to be used as validation
+    #   random_state:   random seed
+    #   n_subs:         number of subsequences used to learn the relationship
+    #   binary:         whether we convert to binary case
+    #   class_one:      the classes to be used as class one
+    #   verbose:        verbosity
+
+    if class_one is None:
+        class_one = [1, 2, 3, 11]
+    n_length = window_len
+    larger_window = window_len * n_subs
+    if verbose > 0:
+        print('[ClassifierTools] Preparing inputs')
+
+    train_series, val_series = train_test_split([x for x in range(len(train_inputs))],
+                                                test_size=val_size,
+                                                random_state=random_state)
+    X_train = []
+    y_train = []
+    for i in train_series:
+        this_series = train_inputs.data[i]
+        this_series_labels = train_inputs.label[i]
+        if (data_version == "trimmed"):
+            subsequences, sub_label = extract_trimmed_subsequences(this_series, this_series_labels,
+                                                               window_size=larger_window,
+                                                               stride=stride,
+                                                               binary=binary,
+                                                               class_one=class_one)
+        elif (data_version == "enhanced"):
+            subsequences, sub_label = extract_enhanced_subsequences(this_series, this_series_labels,
+                                                               window_size=larger_window,
+                                                               stride=stride,
+                                                               binary=binary,
+                                                               class_one=class_one)
+        else:
+            subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
+                                                           window_size=larger_window,
+                                                           stride=stride,
+                                                           binary=binary,
+                                                           class_one=class_one)
+        [X_train.append(x) for x in subsequences]
+        [y_train.append(x) for x in sub_label]
+
+    X_train = np.array(X_train)
+    y_train = np.array(y_train)
+
+    # Up-sampling data
+    X_train, y_train = up_sample(X_train, y_train)
+
+
+    X_val = []
+    y_val = []
+    for i in val_series:
+        this_series = train_inputs.data[i]
+        this_series_labels = train_inputs.label[i]
+        subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
+                                                       window_size=larger_window,
+                                                       stride=stride,
+                                                       binary=binary,
+                                                       class_one=class_one)
+        [X_val.append(x) for x in subsequences]
+        [y_val.append(x) for x in sub_label]
+    X_val = np.array(X_val)
+    y_val = np.array(y_val)
+
+    X_test = []
+    y_test = []
+    for i in range(len(test_inputs)):
+        this_series = test_inputs.data[i]
+        this_series_labels = test_inputs.label[i]
+        subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
+                                                       window_size=larger_window,
+                                                       stride=stride,
+                                                       binary=binary,
+                                                       class_one=class_one)
+        [X_test.append(x) for x in subsequences]
+        [y_test.append(x) for x in sub_label]
+    X_test = np.array(X_test)
+    y_test = np.array(y_test)
+
+    X2_train = X_train.reshape((X_train.shape[0], n_subs, n_length, X_train.shape[2]))
+    X2_val = X_val.reshape((X_val.shape[0], n_subs, n_length, X_val.shape[2]))
+    X2_test = X_test.reshape((X_test.shape[0], n_subs, n_length, X_test.shape[2]))
+
+    dataset1 = [X_train, y_train, X_val, y_val, X_test, y_test]
+    dataset2 = [X2_train, X2_val, X2_test]
+
+    return dataset1, dataset2
+
+
 def prepare_inputs(train_inputs, test_inputs, window_len=40, stride=20, binary=True, class_one=None, verbose=1):
     # This function prepare the inputs to have the right shape for ML attention_models without validation set.
     # The shape we are after is (n_series, series_len, series_dim)

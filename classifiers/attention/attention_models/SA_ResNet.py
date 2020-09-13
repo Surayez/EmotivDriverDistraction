@@ -1,5 +1,5 @@
 import keras
-from .attention_implements.SeqSelfAttention import SeqSelfAttention
+from classifiers.attention.attention_implements import SeqSelfAttention
 
 __author__ = "Surayez Rahman"
 

@@ -6,13 +6,17 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from utils import data_loader
-from utils.classifier_tools import prepare_inputs, prepare_inputs_cnn_lstm, prepare_inputs_deep_learning
+from utils.classifier_tools import prepare_inputs, prepare_inputs_combined
 from utils.tools import create_directory
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 
 __author__ = "Chang Wei Tan and Surayez Rahman"
+
+
+def lstm_models():
+    return ["lstm", "attention", "SA", "MHA"]
 
 
 def results_table(classifier_names, train, test, val):
@@ -70,8 +74,7 @@ def results_chart(classifier_names, train, test, val):
 def fit_classifier(classifier_name, epoch, output_directory, all_labels, x_train, y_train, X_val=None, y_val=None):
     nb_classes = len(np.unique(all_labels))
 
-    # if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or ("attention" in classifier_name):
-    if any(x in classifier_name for x in ["fcn_lstm", "resnet_lstm", "attention", "SA", "MHA"]):
+    if any(x in classifier_name for x in lstm_models()):
         input_shape = (None, x_train.shape[2], x_train.shape[3])
     else:
         input_shape = (x_train.shape[1], x_train.shape[2])
@@ -86,7 +89,7 @@ def fit_classifier(classifier_name, epoch, output_directory, all_labels, x_train
 
 
 def create_classifier(classifier_name, output_directory, input_shape, nb_classes, epoch, verbose=True):
-    if any(x in classifier_name for x in ["attention", "SA", "MHA"]):
+    if any(x in classifier_name for x in ["attention", "SA", "MHA", "MHS_A"]):
         from classifiers import attention_classifier
         return attention_classifier.Classifier_Attention(classifier_name, output_directory, input_shape, epoch, verbose)
     if classifier_name == 'resnet':
@@ -180,7 +183,7 @@ def run_model(classifier_name, data, epoch, window_len, stride, binary):
     return metrics
 
 
-def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
+def prepare_data_cnn_lstm(problem, inputShape, window_len, stride, binary, data_version):
     # Set up output location
     cwd = os.getcwd()
     data_path = cwd + "/TS_Segmentation/"
@@ -207,23 +210,14 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
     print("[Compare_Models] {} train series".format(len(train_data)))
     print("[Compare_Models] {} test series".format(len(test_data)))
 
-    X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
-                                                                             test_inputs=test_data,
+    dataset1, dataset2 = prepare_inputs_combined(train_inputs=train_data,test_inputs=test_data,
                                                                              window_len=window_len,
                                                                              stride=stride,
                                                                              binary=binary,
                                                                              data_version=data_version)
 
-    X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_deep_learning(train_inputs=train_data,
-                                                                                  test_inputs=test_data,
-                                                                                  window_len=window_len,
-                                                                                  stride=stride,
-                                                                                  binary=binary)
-
-    print("[Compare_Models] Train series:", X_train.shape)
-    if X_val is not None:
-        print("[Compare_Models] Val series:", X_val.shape)
-    print("[Compare_Models] Test series", X_test.shape)
+    X_train, y_train, X_val, y_val, X_test, y_test = dataset1[0], dataset1[1], dataset1[2], dataset1[3], dataset1[4], dataset1[5]
+    X2_train, X2_val, X2_test = dataset2[0], dataset2[1], dataset2[2]
 
     if y_val is not None:
         all_labels = np.concatenate((y_train, y_val, y_test), axis=0)
@@ -237,20 +231,28 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
     y_val = tmp[len(y_train):len(y_train) + len(y_val)]
     y_test = tmp[len(y_train) + len(y_val):]
 
-    return [all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory]
+    data_deep_learning = [all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory]
+    data_cnn_lstm = [all_labels, X2_train, y_train, X2_val, y_val, X2_test, y_test, output_directory]
+    return data_deep_learning, data_cnn_lstm
 
 
 def main(argv):
-    problem = "Emotiv266"
-    classifier_names = ["MHA"]
-    epoch = 5
-    window_len = 40
-    stride = 20
-    data_version = ""
     # # For EmotivRaw:
     # window_len = 256
     # stride = 128
+
+    problem = "Emotiv266"
+    classifier_names = ["MHS_A", "MHA"]
+    epoch = 1
+    window_len = 40
+    stride = 20
     binary = True
+
+    # Input Shape -> "" or "singular"
+    # Data Version -> "" or "enhanced" or "trimmed"
+    inputShape = "singular"
+    data_version = ""
+
 
     # Command line args
     try:
@@ -277,10 +279,14 @@ def main(argv):
     result_val = []
 
     # Prepare Data
-    data = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version)
+    data_deep_learning, data_cnn_lstm = prepare_data_cnn_lstm(problem, inputShape, window_len, stride, binary, data_version)
 
     for classifier_name in classifier_names:
         # Run each Model
+        if any(x in classifier_name for x in lstm_models()):
+            data = data_cnn_lstm
+        else:
+            data = data_deep_learning
         metrics = run_model(classifier_name, data, epoch, window_len, stride, binary)
         print(metrics.head())
 
