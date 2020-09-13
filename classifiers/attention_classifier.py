@@ -10,7 +10,7 @@ from classifiers.attention.attention_models import ATTN_experiment, ATTN_ResNet,
 from keras_self_attention import SeqSelfAttention
 from keras_multi_head import MultiHeadAttention
 
-__author__ = "Chang Wei Tan & Surayez Rahman"
+__author__ = "Surayez Rahman"
 
 
 class Classifier_Attention:
@@ -99,14 +99,10 @@ class Classifier_Attention:
         if self.verbose:
             print('[' + self.classifier_name + '] Predicting')
 
-        if ("SA" in self.classifier_name):
-            model = keras.models.load_model(self.output_directory + 'best_model.h5',
-                                            custom_objects={'SeqSelfAttention': SeqSelfAttention})
-        elif ("MHA" in self.classifier_name or "experiment" in self.classifier_name or "MHS_A" in self.classifier_name):
-            model = keras.models.load_model(self.output_directory + 'best_model.h5',
-                                            custom_objects={'MultiHeadAttention': MultiHeadAttention})
-        else:
-            model = keras.models.load_model(self.output_directory + 'best_model.h5')
+        model = keras.models.load_model(self.output_directory + 'best_model.h5',
+                                        custom_objects={'MultiHeadAttention': MultiHeadAttention,
+                                                        'SeqSelfAttention': SeqSelfAttention
+                                                        })
 
         model_metrics, conf_mat, y_true, y_pred = predict_model_deep_learning(model, Ximg, yimg, self.output_directory)
         save_logs(self.output_directory, self.hist, y_pred, y_true, self.duration)
