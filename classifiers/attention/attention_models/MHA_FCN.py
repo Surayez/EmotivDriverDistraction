@@ -1,5 +1,5 @@
 import keras
-from .attention_implements.MultiHeadAttention import MultiHeadAttention
+from classifiers.attention.attention_implements.MultiHeadAttention import MultiHeadAttention
 
 __author__ = "Surayez Rahman"
 

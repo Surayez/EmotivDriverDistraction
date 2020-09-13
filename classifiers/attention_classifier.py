@@ -2,9 +2,10 @@ import time
 import keras
 from classifiers.classifiers import predict_model_deep_learning
 from utils.tools import save_logs
-from classifiers.attention_models import attention_model, attention_model_fcn, attention_model_resnet, \
-    attention_experiment, attention_model_bidirectional, multiheadattention_model, selfattention_fcn, \
-    selfattention_resnet, multiheadattention_fcn, multiheadattention_resnet
+from classifiers.attention.attention_singular_models import S_MHA_ResNet
+from classifiers.attention.attention_models import ATTN_experiment, ATTN_ResNet, \
+    MHA_ResNet, SA_ResNet, MHA_FCN, MHA, \
+    ATTN_FCN, ATTN_BiDirectional_LSTM, SA_FCN
 
 from keras_self_attention import SeqSelfAttention
 from keras_multi_head import MultiHeadAttention
@@ -24,23 +25,25 @@ class Classifier_Attention:
 
         # UPDATE the following line to use desired model
         if classifier_name == "attention_bidirectional":
-            self.model = attention_model_bidirectional.build_model(input_shape)
+            self.model = ATTN_BiDirectional_LSTM.build_model(input_shape)
         elif classifier_name == "attention_resnet":
-            self.model = attention_model_resnet.build_model(input_shape)
+            self.model = ATTN_ResNet.build_model(input_shape)
         elif classifier_name == "attention_fcn":
-            self.model = attention_model_fcn.build_model(input_shape)
+            self.model = ATTN_FCN.build_model(input_shape)
         elif classifier_name == "MHA":
-            self.model = multiheadattention_model.build_model(input_shape)
+            self.model = MHA.build_model(input_shape)
+        elif classifier_name == "MHS_A":
+            self.model = S_MHA_ResNet.build_model(input_shape)
         elif classifier_name == "SA_FCN":
-            self.model = selfattention_fcn.build_model(input_shape)
+            self.model = SA_FCN.build_model(input_shape)
         elif classifier_name == "SA_ResNet":
-            self.model = selfattention_resnet.build_model(input_shape)
+            self.model = SA_ResNet.build_model(input_shape)
         elif classifier_name == "MHA_FCN":
-            self.model = multiheadattention_fcn.build_model(input_shape)
+            self.model = MHA_FCN.build_model(input_shape)
         elif classifier_name == "MHA_ResNet":
-            self.model = multiheadattention_resnet.build_model(input_shape)
+            self.model = MHA_ResNet.build_model(input_shape)
         else:
-            self.model = attention_experiment.build_model(input_shape)
+            self.model = ATTN_experiment.build_model(input_shape)
 
         if verbose:
             self.model.summary()
@@ -99,7 +102,7 @@ class Classifier_Attention:
         if ("SA" in self.classifier_name):
             model = keras.models.load_model(self.output_directory + 'best_model.h5',
                                             custom_objects={'SeqSelfAttention': SeqSelfAttention})
-        elif ("MHA" in self.classifier_name or "experiment" in self.classifier_name):
+        elif ("MHA" in self.classifier_name or "experiment" in self.classifier_name or "MHS_A" in self.classifier_name):
             model = keras.models.load_model(self.output_directory + 'best_model.h5',
                                             custom_objects={'MultiHeadAttention': MultiHeadAttention})
         else:
