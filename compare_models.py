@@ -16,11 +16,11 @@ __author__ = "Chang Wei Tan and Surayez Rahman"
 
 
 def attention_models():
-    return ["attention", "SA", "MHA", "S_A"]
+    return ["attention", "SelfA", "MHA", "SA"]
 
 
 def lstm_models():
-    return ["lstm", "attention", "SA", "MHA"]
+    return ["lstm", "attention", "SelfA", "MHA"]
 
 
 def results_table(classifier_names, train, test, val):
@@ -187,7 +187,7 @@ def run_model(classifier_name, data, epoch, window_len, stride, binary):
     return metrics
 
 
-def prepare_data_cnn_lstm(problem, inputShape, window_len, stride, binary, data_version):
+def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
     # Set up output location
     cwd = os.getcwd()
     data_path = cwd + "/TS_Segmentation/"
@@ -237,6 +237,7 @@ def prepare_data_cnn_lstm(problem, inputShape, window_len, stride, binary, data_
 
     data_deep_learning = [all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory]
     data_cnn_lstm = [all_labels, X2_train, y_train, X2_val, y_val, X2_test, y_test, output_directory]
+
     return data_deep_learning, data_cnn_lstm
 
 
@@ -246,15 +247,13 @@ def main(argv):
     # stride = 128
 
     problem = "Emotiv266"
-    classifier_names = ["MHS_A", "MHA"]
+    classifier_names = ["MHSA_FCN"]
     epoch = 1
     window_len = 40
     stride = 20
     binary = True
 
-    # Input Shape -> "" or "singular"
-    # Data Version -> "" or "enhanced" or "trimmed"
-    inputShape = "singular"
+    # Data Version: ["" or "enhanced" or "trimmed"]
     data_version = ""
 
     # Command line args
@@ -282,7 +281,7 @@ def main(argv):
     result_val = []
 
     # Prepare Data
-    data_deep_learning, data_cnn_lstm = prepare_data_cnn_lstm(problem, inputShape, window_len, stride, binary, data_version)
+    data_deep_learning, data_cnn_lstm = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version)
 
     for classifier_name in classifier_names:
         # Run each Model

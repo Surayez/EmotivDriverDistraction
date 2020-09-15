@@ -211,7 +211,8 @@ def up_sample(x_train, y_train):
 
 
 def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
-                            val_size=2, random_state=1234, n_subs=4, binary=True, class_one=None, verbose=1, data_version=""):
+                            val_size=2, random_state=1234, n_subs=4, binary=True, class_one=None, verbose=1,
+                            data_version=""):
     # This function prepare the inputs to have the right shape for deep learning attention_models specifically CNN-LSTM attention_models.
     # The idea is to get n_subs subsequences of length=window_len, pass each of them to a CNN for features and
     # learn the relationship with past subsequences using LSTM.
@@ -246,16 +247,16 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
         this_series_labels = train_inputs.label[i]
         if (data_version == "trimmed"):
             subsequences, sub_label = extract_trimmed_subsequences(this_series, this_series_labels,
-                                                               window_size=larger_window,
-                                                               stride=stride,
-                                                               binary=binary,
-                                                               class_one=class_one)
+                                                                   window_size=larger_window,
+                                                                   stride=stride,
+                                                                   binary=binary,
+                                                                   class_one=class_one)
         elif (data_version == "enhanced"):
             subsequences, sub_label = extract_enhanced_subsequences(this_series, this_series_labels,
-                                                               window_size=larger_window,
-                                                               stride=stride,
-                                                               binary=binary,
-                                                               class_one=class_one)
+                                                                    window_size=window_len,
+                                                                    stride=stride,
+                                                                    binary=binary,
+                                                                    class_one=class_one)
         else:
             subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
                                                            window_size=larger_window,
@@ -312,7 +313,8 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
 
 
 def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
-                            val_size=2, random_state=1234, n_subs=4, binary=True, class_one=None, verbose=1, data_version=""):
+                            val_size=2, random_state=1234, n_subs=4, binary=True, class_one=None, verbose=1,
+                            data_version=""):
     # This function prepare the inputs to have the right shape for deep learning attention_models specifically CNN-LSTM attention_models.
     # The idea is to get n_subs subsequences of length=window_len, pass each of them to a CNN for features and
     # learn the relationship with past subsequences using LSTM.
@@ -347,16 +349,16 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
         this_series_labels = train_inputs.label[i]
         if (data_version == "trimmed"):
             subsequences, sub_label = extract_trimmed_subsequences(this_series, this_series_labels,
-                                                               window_size=larger_window,
-                                                               stride=stride,
-                                                               binary=binary,
-                                                               class_one=class_one)
+                                                                   window_size=larger_window,
+                                                                   stride=stride,
+                                                                   binary=binary,
+                                                                   class_one=class_one)
         elif (data_version == "enhanced"):
             subsequences, sub_label = extract_enhanced_subsequences(this_series, this_series_labels,
-                                                               window_size=larger_window,
-                                                               stride=stride,
-                                                               binary=binary,
-                                                               class_one=class_one)
+                                                                    window_size=larger_window,
+                                                                    stride=stride,
+                                                                    binary=binary,
+                                                                    class_one=class_one)
         else:
             subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
                                                            window_size=larger_window,
@@ -371,7 +373,6 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
 
     # Up-sampling data
     X_train, y_train = up_sample(X_train, y_train)
-
 
     X_val = []
     y_val = []
@@ -534,6 +535,7 @@ def extract_enhanced_subsequences(X_data, y_data, window_size=30, stride=1, bina
     if class_one is None:
         class_one = [3, 11]
     data_len, data_dim = X_data.shape
+    # X_data, y_data = check_block(X_data, y_data, data_len, class_one)
 
     subsequences = []
     labels = []
@@ -542,68 +544,92 @@ def extract_enhanced_subsequences(X_data, y_data, window_size=30, stride=1, bina
         end = i + window_size
         if end > data_len:
             break
-        consistent_labels = checkSame(y_data[i:end])
-        if consistent_labels:
-            label = stats.mode(y_data[i:end]).mode[0]
-            # label = stats.mode(y_data[i:end]).mode[0]
-            tmp = X_data[i:end, :]
-            if norm:
-                # usually z-normalisation is required for TSC
-                scaler = StandardScaler()
-                tmp = scaler.fit_transform(tmp)
-            subsequences.append(tmp)
-            if binary:
-                label = make_binary(label, class_one=class_one)
-            labels.append(label)
-            count += 1
-        else:
-            new_x_data, new_y_data = fix_window(X_data[i:end, :], y_data[i:end], window_size, binary, class_one)
-            subsequences += new_x_data
-            labels += new_y_data
-            count += 1
+        tmp = X_data[i:end, :]
+        if norm:
+            # usually z-normalisation is required for TSC
+            scaler = StandardScaler()
+            tmp = scaler.fit_transform(tmp)
+        subsequences.append(tmp)
+        label = stats.mode(y_data[i:end]).mode[0]
+        checkLabel = calculate_cutoff(y_data[i:end], class_one)
+        current_label = y_data[i:end] 
+        if checkLabel != None:
+            raise Exception("NOT SAME LABELS")
+        if binary:
+            label = make_binary(label, class_one=class_one)
+        labels.append(label)
+
+        count += 1
 
     return np.array(subsequences), np.array(labels)
 
 
-def fix_window(x_data, y_data, window_size, binary, class_one):
-    tmp_labels = []
-    tmp_dataAll = []
-    while not checkSame(y_data):
-        cutOffPnt = calculateCutOff(y_data)
-        tmp_data = x_data[:cutOffPnt]
-        while len(tmp_data) < window_size:
-            tmp_data = np.concatenate((tmp_data, tmp_data))
+def check_block(x_data, y_data, data_len, class_one):
+    block_size = 40
+    location = 0
+    while location + block_size <= data_len:
+        block_y = y_data[location: location + block_size]
+        cutOff = calculate_cutoff(block_y, class_one)
+        if cutOff is not None:
+            additional = block_size - cutOff
+            for i in range(additional):
+                data_to_add = x_data[location + cutOff - 1]
+                y_data_to_add = y_data[location + cutOff - 1]
+                x_data = np.insert(x_data, location + cutOff, data_to_add, 0)
+                y_data = np.insert(y_data, location + cutOff, y_data_to_add, 0)
+        else:
+            location += block_size
 
-        tmp_label = y_data[0]
-        if binary:
-            tmp_label = make_binary(tmp_label, class_one=class_one)
-
-        tmp_labels.append(tmp_label)
-        tmp_dataAll.append(tmp_data[:160])
-        y_data = y_data[cutOffPnt:]
-        x_data = x_data[cutOffPnt:]
-
-    if len(y_data) != 0:
-        tmp_data = x_data[:]
-        while len(tmp_data) < window_size:
-            tmp_data = np.concatenate((tmp_data, tmp_data))
-        tmp_label = y_data[0]
-        if binary:
-            tmp_label = make_binary(tmp_label, class_one=class_one)
-        tmp_labels.append(tmp_label)
-        tmp_dataAll.append(tmp_data[:160])
-
-    return tmp_dataAll, tmp_labels
+    return x_data, y_data
 
 
-def calculateCutOff(ydata):
+def calculate_cutoff(ydata, class_one):
+    exists_class_one = False
+    y_label = ydata[0]
+    if y_label in class_one:
+        exists_class_one = True
     count = 0
-    for i in range(len(ydata)-1):
+    for i in range(1, len(ydata) - 1):
         count += 1
-        if ydata[i] != ydata[i + 1]:
+        if exists_class_one and ydata[i] not in class_one:
             return count
+        elif exists_class_one is False and ydata[i] in class_one:
+            return count
+    return None
 
-def checkSame(iterator):
+
+# def fix_window(x_data, y_data, window_size, binary, class_one):
+#     tmp_labels = []
+#     tmp_dataAll = []
+#     while not checkSame(y_data):
+#         cutOffPnt = calculateCutOff(y_data)
+#         tmp_data = x_data[:cutOffPnt]
+#         while len(tmp_data) < window_size:
+#             tmp_data = np.concatenate((tmp_data, tmp_data))
+#
+#         tmp_label = y_data[0]
+#         if binary:
+#             tmp_label = make_binary(tmp_label, class_one=class_one)
+#
+#         tmp_labels.append(tmp_label)
+#         tmp_dataAll.append(tmp_data[:160])
+#         y_data = y_data[cutOffPnt:]
+#         x_data = x_data[cutOffPnt:]
+#
+#     if len(y_data) != 0:
+#         tmp_data = x_data[:]
+#         while len(tmp_data) < window_size:
+#             tmp_data = np.concatenate((tmp_data, tmp_data))
+#         tmp_label = y_data[0]
+#         if binary:
+#             tmp_label = make_binary(tmp_label, class_one=class_one)
+#         tmp_labels.append(tmp_label)
+#         tmp_dataAll.append(tmp_data[:160])
+#
+#     return tmp_dataAll, tmp_labels
+
+
+def checkSame(iterator, class_one):
     iterator = iter(iterator)
     try:
         first = next(iterator)

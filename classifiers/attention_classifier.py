@@ -2,10 +2,10 @@ import time
 import keras
 from classifiers.classifiers import predict_model_deep_learning
 from utils.tools import save_logs
-from classifiers.attention.attention_singular_models import S_MHA_ResNet
+from classifiers.attention.attention_singular_models import MHSA_ResNet, MHSA_FCN, MHSA, SATTN
 from classifiers.attention.attention_models import ATTN_experiment, ATTN_ResNet, \
-    MHA_ResNet, SA_ResNet, MHA_FCN, MHA, \
-    ATTN_FCN, ATTN_BiDirectional_LSTM, SA_FCN
+    MHA_ResNet, SelfA_ResNet, MHA_FCN, MHA, \
+    ATTN_FCN, ATTN_BiDirectional_LSTM, SelfA_FCN
 
 from keras_self_attention import SeqSelfAttention
 from keras_multi_head import MultiHeadAttention
@@ -30,14 +30,20 @@ class Classifier_Attention:
             self.model = ATTN_ResNet.build_model(input_shape)
         elif classifier_name == "attention_fcn":
             self.model = ATTN_FCN.build_model(input_shape)
+        elif classifier_name == "SATTN":
+            self.model = SATTN.build_model(input_shape)
         elif classifier_name == "MHA":
             self.model = MHA.build_model(input_shape)
-        elif classifier_name == "MHS_A":
-            self.model = S_MHA_ResNet.build_model(input_shape)
-        elif classifier_name == "SA_FCN":
-            self.model = SA_FCN.build_model(input_shape)
-        elif classifier_name == "SA_ResNet":
-            self.model = SA_ResNet.build_model(input_shape)
+        elif classifier_name == "MHSA":
+            self.model = MHSA.build_model(input_shape)
+        elif classifier_name == "MHSA_ResNet":
+            self.model = MHSA_ResNet.build_model(input_shape)
+        elif classifier_name == "MHSA_FCN":
+            self.model = MHSA_FCN.build_model(input_shape)
+        elif classifier_name == "SelfA_FCN":
+            self.model = SelfA_FCN.build_model(input_shape)
+        elif classifier_name == "SelfA_ResNet":
+            self.model = SelfA_ResNet.build_model(input_shape)
         elif classifier_name == "MHA_FCN":
             self.model = MHA_FCN.build_model(input_shape)
         elif classifier_name == "MHA_ResNet":
