@@ -214,14 +214,14 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
     print("[Compare_Models] {} train series".format(len(train_data)))
     print("[Compare_Models] {} test series".format(len(test_data)))
 
-    dataset1, dataset2 = prepare_inputs_combined(train_inputs=train_data,test_inputs=test_data,
+    dataset1, dataset2 = prepare_inputs_combined(train_inputs=train_data, test_inputs=test_data,
                                                                              window_len=window_len,
                                                                              stride=stride,
                                                                              binary=binary,
                                                                              data_version=data_version)
 
     X_train, y_train, X_val, y_val, X_test, y_test = dataset1[0], dataset1[1], dataset1[2], dataset1[3], dataset1[4], dataset1[5]
-    X2_train, X2_val, X2_test = dataset2[0], dataset2[1], dataset2[2]
+    X2_train, y2_train, X2_val, y2_val, X2_test, y2_test = dataset2[0], dataset2[1], dataset2[2], dataset2[3], dataset2[4], dataset2[5]
 
     if y_val is not None:
         all_labels = np.concatenate((y_train, y_val, y_test), axis=0)
@@ -236,7 +236,7 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
     y_test = tmp[len(y_train) + len(y_val):]
 
     data_deep_learning = [all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory]
-    data_cnn_lstm = [all_labels, X2_train, y_train, X2_val, y_val, X2_test, y_test, output_directory]
+    data_cnn_lstm = [all_labels, X2_train, y2_train, X2_val, y2_val, X2_test, y2_test, output_directory]
 
     return data_deep_learning, data_cnn_lstm
 
@@ -247,8 +247,8 @@ def main(argv):
     # stride = 128
 
     problem = "Emotiv266"
-    classifier_names = ["MHSA_FCN"]
-    epoch = 1
+    classifier_names = ["MHSA_ResNet", "MHSA_FCN", "MHSA", "MHA_ResNet"]
+    epoch = 20
     window_len = 40
     stride = 20
     binary = True

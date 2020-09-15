@@ -7,10 +7,27 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import RandomOverSampler
 
+# Most of the code here are taken from https://github.com/hfawaz/dl-4-tsc
 __author__ = "Chang Wei Tan and Surayez Rahman"
 
 
-# Most of the code here are taken from https://github.com/hfawaz/dl-4-tsc
+def up_sample(x_train, y_train):
+    # Ref: https://stackoverflow.com/questions/56125380/resampling-data-using-smote-from-imblearn-with-3d-numpy-arrays
+    print('Original dataset shape {}'.format(x_train.shape))
+    print('Original dataset classes {}'.format(Counter(y_train)))
+    orig_shape = x_train.shape
+    x_train_reshaped = np.reshape(x_train, (x_train.shape[0], x_train.shape[1] * x_train.shape[2]))
+
+    ros = RandomOverSampler(random_state=0)
+    X_res, y_res = ros.fit_sample(x_train_reshaped, y_train)
+    X_res_shape = X_res.shape
+
+    x_train_final = np.reshape(X_res, (X_res_shape[0], orig_shape[1], orig_shape[2]))
+    print('Re-sampled dataset shape {}'.format(x_train_final.shape))
+    print('Re-sampled dataset classes {}'.format(Counter(y_res)))
+
+    return x_train_final, y_res
+
 
 def prepare_inputs_attention(train_inputs, test_inputs, window_len=40, stride=20,
                              val_size=2, random_state=1234, binary=True, class_one=None, verbose=1):
@@ -94,7 +111,7 @@ def prepare_inputs_attention(train_inputs, test_inputs, window_len=40, stride=20
 
 
 def prepare_inputs_deep_learning(train_inputs, test_inputs, window_len=40, stride=20,
-                                 val_size=2, random_state=1234, binary=True, class_one=None, verbose=1):
+                                 val_size=2, random_state=1234, binary=True, class_one=None, verbose=1, data_version=""):
     # This function prepare the inputs to have the right shape for deep learning attention_models.
     # The shape we are after is (n_series, series_len, series_dim)
     # Inputs are df with data and label columns
@@ -109,7 +126,7 @@ def prepare_inputs_deep_learning(train_inputs, test_inputs, window_len=40, strid
     #   class_one:      the classes to be used as class one
     #   verbose:        verbosity
     if class_one is None:
-        class_one = [3, 11]
+        class_one = [1, 2, 3, 11]
     if verbose > 0:
         print('[ClassifierTools] Preparing inputs')
 
@@ -126,11 +143,18 @@ def prepare_inputs_deep_learning(train_inputs, test_inputs, window_len=40, strid
     for i in train_series:
         this_series = train_inputs.data[i]
         this_series_labels = train_inputs.label[i]
-        subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
-                                                       window_size=window_len,
-                                                       stride=stride,
-                                                       binary=binary,
-                                                       class_one=class_one)
+        if data_version == "enhanced":
+            subsequences, sub_label = extract_enhanced_subsequences(this_series, this_series_labels,
+                                                                    window_size=window_len,
+                                                                    stride=stride,
+                                                                    binary=binary,
+                                                                    class_one=class_one)
+        else:
+            subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
+                                                           window_size=window_len,
+                                                           stride=stride,
+                                                           binary=binary,
+                                                           class_one=class_one)
         [X_train.append(x) for x in subsequences]
         [y_train.append(x) for x in sub_label]
     X_train = np.array(X_train)
@@ -171,43 +195,6 @@ def prepare_inputs_deep_learning(train_inputs, test_inputs, window_len=40, strid
     y_test = np.array(y_test)
 
     return X_train, y_train, X_val, y_val, X_test, y_test
-
-
-# def convert_inputs_deep_learning(data):
-#     all_labels = data[0]
-#     X_train = data[1]
-#     y_train = data[2]
-#     X_val = data[3]
-#     y_val = data[4]
-#     X_test = data[5]
-#     y_test = data[6]
-#     output_directory = data[7]
-#
-#     X_train = X_train.reshape((X_train.shape[0], n_subs, n_length, X_train.shape[2]))
-#     X_val = X_val.reshape((X_val.shape[0], n_subs, n_length, X_val.shape[2]))
-#     X_test = X_test.reshape((X_test.shape[0], n_subs, n_length, X_test.shape[2]))
-#
-#     return all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory
-#
-#
-
-
-def up_sample(x_train, y_train):
-    # Ref: https://stackoverflow.com/questions/56125380/resampling-data-using-smote-from-imblearn-with-3d-numpy-arrays
-    print('Original dataset shape {}'.format(x_train.shape))
-    print('Original dataset classes {}'.format(Counter(y_train)))
-    orig_shape = x_train.shape
-    x_train_reshaped = np.reshape(x_train, (x_train.shape[0], x_train.shape[1] * x_train.shape[2]))
-
-    ros = RandomOverSampler(random_state=0)
-    X_res, y_res = ros.fit_sample(x_train_reshaped, y_train)
-    X_res_shape = X_res.shape
-
-    x_train_final = np.reshape(X_res, (X_res_shape[0], orig_shape[1], orig_shape[2]))
-    print('Re-sampled dataset shape {}'.format(x_train_final.shape))
-    print('Re-sampled dataset classes {}'.format(Counter(y_res)))
-
-    return x_train_final, y_res
 
 
 def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
@@ -334,7 +321,6 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
 
     if class_one is None:
         class_one = [1, 2, 3, 11]
-    n_length = window_len
     larger_window = window_len * n_subs
     if verbose > 0:
         print('[ClassifierTools] Preparing inputs')
@@ -404,12 +390,18 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
     X_test = np.array(X_test)
     y_test = np.array(y_test)
 
-    X2_train = X_train.reshape((X_train.shape[0], n_subs, n_length, X_train.shape[2]))
-    X2_val = X_val.reshape((X_val.shape[0], n_subs, n_length, X_val.shape[2]))
-    X2_test = X_test.reshape((X_test.shape[0], n_subs, n_length, X_test.shape[2]))
-
     dataset1 = [X_train, y_train, X_val, y_val, X_test, y_test]
-    dataset2 = [X2_train, X2_val, X2_test]
+
+    X2_train, y2_train, X2_val, y2_val, X2_test, y2_test = prepare_inputs_deep_learning(train_inputs=train_inputs,
+                                                                                 test_inputs=test_inputs,
+                                                                                 window_len=window_len,
+                                                                                 stride=stride,
+                                                                                 binary=binary, data_version=data_version)
+
+    # Up-sampling data
+    X2_train, y2_train = up_sample(X2_train, y2_train)
+
+    dataset2 = [X2_train, y2_train, X2_val, y2_val, X2_test, y2_test]
 
     return dataset1, dataset2
 
@@ -528,7 +520,7 @@ def extract_trimmed_subsequences(X_data, y_data, window_size=30, stride=1, binar
     return np.array(subsequences), np.array(labels)
 
 
-def extract_enhanced_subsequences(X_data, y_data, window_size=30, stride=1, binary=True, class_one=None, norm=True):
+def extract_enhanced_subsequences(X_data, y_data, window_size=40, stride=1, binary=True, class_one=None, norm=True):
     # This function extract subsequences from a long time series.
     # Assumes that each timestamp has a label represented by y_data.
     # The label for each subsequence is taken with the majority class in that segment.
@@ -544,17 +536,15 @@ def extract_enhanced_subsequences(X_data, y_data, window_size=30, stride=1, bina
         end = i + window_size
         if end > data_len:
             break
+
         tmp = X_data[i:end, :]
         if norm:
             # usually z-normalisation is required for TSC
             scaler = StandardScaler()
             tmp = scaler.fit_transform(tmp)
+
+        tmp, label = fix_block(x_data=tmp, y_data=y_data[i:end], class_one=class_one, block_size=window_size)
         subsequences.append(tmp)
-        label = stats.mode(y_data[i:end]).mode[0]
-        checkLabel = calculate_cutoff(y_data[i:end], class_one)
-        current_label = y_data[i:end] 
-        if checkLabel != None:
-            raise Exception("NOT SAME LABELS")
         if binary:
             label = make_binary(label, class_one=class_one)
         labels.append(label)
@@ -581,6 +571,30 @@ def check_block(x_data, y_data, data_len, class_one):
             location += block_size
 
     return x_data, y_data
+
+
+def fix_block(x_data, y_data, class_one, block_size):
+    cutOff = calculate_cutoff(y_data, class_one)
+
+    if cutOff is not None:
+        if cutOff >= block_size / 2:
+            additional = block_size - cutOff
+            x_processed_data = x_data[:cutOff, ]
+            label = stats.mode(y_data[:cutOff]).mode[0]
+            for i in range(additional):
+                x_data_to_add = x_data[cutOff - 1]
+                x_processed_data = np.insert(x_processed_data, cutOff + i, x_data_to_add, 0)
+        else:
+            additional = block_size - cutOff
+            x_processed_data = x_data[cutOff:, ]
+            label = stats.mode(y_data[cutOff:]).mode[0]
+            for i in range(cutOff):
+                x_data_to_add = x_data[block_size - 1]
+                x_processed_data = np.insert(x_processed_data, additional + i, x_data_to_add, 0)
+        return x_processed_data, label
+
+    else:
+        return x_data, y_data[0]
 
 
 def calculate_cutoff(ydata, class_one):
