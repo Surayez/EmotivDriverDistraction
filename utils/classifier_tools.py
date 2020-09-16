@@ -259,7 +259,6 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
     # Up-sampling data
     X_train, y_train = up_sample(X_train, y_train)
 
-    # Magic happens here
     X_train = X_train.reshape((X_train.shape[0], n_subs, n_length, X_train.shape[2]))
 
     X_val = []
@@ -321,6 +320,7 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
 
     if class_one is None:
         class_one = [1, 2, 3, 11]
+    n_length = window_len
     larger_window = window_len * n_subs
     if verbose > 0:
         print('[ClassifierTools] Preparing inputs')
@@ -359,6 +359,7 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
 
     # Up-sampling data
     X_train, y_train = up_sample(X_train, y_train)
+    X_train = X_train.reshape((X_train.shape[0], n_subs, n_length, X_train.shape[2]))
 
     X_val = []
     y_val = []
@@ -374,6 +375,7 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
         [y_val.append(x) for x in sub_label]
     X_val = np.array(X_val)
     y_val = np.array(y_val)
+    X_val = X_val.reshape((X_val.shape[0], n_subs, n_length, X_val.shape[2]))
 
     X_test = []
     y_test = []
@@ -389,6 +391,7 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
         [y_test.append(x) for x in sub_label]
     X_test = np.array(X_test)
     y_test = np.array(y_test)
+    X_test = X_test.reshape((X_test.shape[0], n_subs, n_length, X_test.shape[2]))
 
     dataset1 = [X_train, y_train, X_val, y_val, X_test, y_test]
 
