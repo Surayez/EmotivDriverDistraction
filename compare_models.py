@@ -236,19 +236,32 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
     y_test = tmp[len(y_train) + len(y_val):]
 
     data_deep_learning = [all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory]
-    data_cnn_lstm = [all_labels, X2_train, y2_train, X2_val, y2_val, X2_test, y2_test, output_directory]
+
+    if y2_val is not None:
+        all_labels2 = np.concatenate((y2_train, y2_val, y2_test), axis=0)
+    else:
+        all_labels2 = np.concatenate((y2_train, y2_test), axis=0)
+    print("[Compare_Models] All labels 2: {}".format(np.unique(all_labels2)))
+
+    tmp2 = pd.get_dummies(all_labels2).values
+
+    y2_train = tmp2[:len(y2_train)]
+    y2_val = tmp2[len(y2_train):len(y2_train) + len(y2_val)]
+    y2_test = tmp2[len(y2_train) + len(y2_val):]
+
+    data_cnn_lstm = [all_labels2, X2_train, y2_train, X2_val, y2_val, X2_test, y2_test, output_directory]
 
     return data_deep_learning, data_cnn_lstm
 
 
 def main(argv):
     # # For EmotivRaw:
-    # window_len = 256
-    # stride = 128
+    # window_len = 512
+    # stride = 256
 
     problem = "Emotiv266"
-    classifier_names = ["MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA_ResNet"]
-    epoch = 20
+    classifier_names = ["MHSA_ResNet", "MHA_ResNet"]
+    epoch = 1
     window_len = 40
     stride = 20
     binary = True

@@ -30,5 +30,5 @@ def build_model(input_shape):
 
 
 if __name__ == "__main__":
-    inp_shape = (40, 266)
+    inp_shape = (None, 40, 266)
     model = build_model(inp_shape)
