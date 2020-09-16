@@ -70,7 +70,9 @@ def build_model(input_shape):
 
     lstm_layer = keras.layers.LSTM(128, return_sequences=True)(output_block_3)
     att_layer = MultiHeadAttention(head_num=128)(lstm_layer)
-    gap_layer = keras.layers.pooling.GlobalAveragePooling1D()(att_layer)
+    lstm_layer = keras.layers.LSTM(128, return_sequences=True)(att_layer)
+
+    gap_layer = keras.layers.pooling.GlobalAveragePooling1D()(lstm_layer)
 
     output_layer = keras.layers.Dense(2, activation='softmax')(gap_layer)
 
