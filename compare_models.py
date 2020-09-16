@@ -255,7 +255,7 @@ def main(argv):
 
     # Data Version: ["" or "enhanced" or "trimmed"]
     data_version = ""
-    terminal
+
     # Command line args
     try:
         opts, args = getopt.getopt(argv, "p:c:e:", ["problem=", "classifier=", "epoch="])
