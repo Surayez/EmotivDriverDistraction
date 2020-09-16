@@ -247,7 +247,7 @@ def main(argv):
     # stride = 128
 
     problem = "Emotiv266"
-    classifier_names = ["MHSA_ResNet", "MHSA_FCN", "MHSA", "MHA_ResNet"]
+    classifier_names = ["MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA_ResNet"]
     epoch = 20
     window_len = 40
     stride = 20
@@ -255,7 +255,7 @@ def main(argv):
 
     # Data Version: ["" or "enhanced" or "trimmed"]
     data_version = ""
-
+    terminal
     # Command line args
     try:
         opts, args = getopt.getopt(argv, "p:c:e:", ["problem=", "classifier=", "epoch="])
@@ -281,7 +281,7 @@ def main(argv):
     result_val = []
 
     # Prepare Data
-    data_deep_learning, data_cnn_lstm = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version)
+    data_cnn_lstm, data_deep_learning = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version)
 
     for classifier_name in classifier_names:
         # Run each Model
