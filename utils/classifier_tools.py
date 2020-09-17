@@ -333,24 +333,24 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
     for i in train_series:
         this_series = train_inputs.data[i]
         this_series_labels = train_inputs.label[i]
-        if (data_version == "trimmed"):
-            subsequences, sub_label = extract_trimmed_subsequences(this_series, this_series_labels,
-                                                                   window_size=larger_window,
-                                                                   stride=stride,
-                                                                   binary=binary,
-                                                                   class_one=class_one)
-        elif (data_version == "enhanced"):
-            subsequences, sub_label = extract_enhanced_subsequences(this_series, this_series_labels,
-                                                                    window_size=larger_window,
-                                                                    stride=stride,
-                                                                    binary=binary,
-                                                                    class_one=class_one)
-        else:
-            subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
-                                                           window_size=larger_window,
-                                                           stride=stride,
-                                                           binary=binary,
-                                                           class_one=class_one)
+        # if (data_version == "trimmed"):
+        #     subsequences, sub_label = extract_trimmed_subsequences(this_series, this_series_labels,
+        #                                                            window_size=larger_window,
+        #                                                            stride=stride,
+        #                                                            binary=binary,
+        #                                                            class_one=class_one)
+        # elif (data_version == "enhanced"):
+        #     subsequences, sub_label = extract_enhanced_subsequences(this_series, this_series_labels,
+        #                                                             window_size=larger_window,
+        #                                                             stride=stride,
+        #                                                             binary=binary,
+        #                                                             class_one=class_one)
+        # else:
+        subsequences, sub_label = extract_subsequences(this_series, this_series_labels,
+                                                       window_size=larger_window,
+                                                       stride=stride,
+                                                       binary=binary,
+                                                       class_one=class_one)
         [X_train.append(x) for x in subsequences]
         [y_train.append(x) for x in sub_label]
 
@@ -530,7 +530,6 @@ def extract_enhanced_subsequences(X_data, y_data, window_size=40, stride=1, bina
     if class_one is None:
         class_one = [3, 11]
     data_len, data_dim = X_data.shape
-    # X_data, y_data = check_block(X_data, y_data, data_len, class_one)
 
     subsequences = []
     labels = []
@@ -547,10 +546,11 @@ def extract_enhanced_subsequences(X_data, y_data, window_size=40, stride=1, bina
             tmp = scaler.fit_transform(tmp)
 
         tmp, label = fix_block(x_data=tmp, y_data=y_data[i:end], class_one=class_one, block_size=window_size)
-        subsequences.append(tmp)
-        if binary:
-            label = make_binary(label, class_one=class_one)
-        labels.append(label)
+        if tmp is not None:
+            subsequences.append(tmp)
+            if binary:
+                label = make_binary(label, class_one=class_one)
+            labels.append(label)
 
         count += 1
 
@@ -583,17 +583,27 @@ def fix_block(x_data, y_data, class_one, block_size):
         if cutOff >= block_size / 2:
             additional = block_size - cutOff
             x_processed_data = x_data[:cutOff, ]
+            y_processed_data = y_data[:cutOff, ]
             label = stats.mode(y_data[:cutOff]).mode[0]
             for i in range(additional):
                 x_data_to_add = x_data[cutOff - 1]
+                y_data_to_add = y_data[cutOff - 1]
                 x_processed_data = np.insert(x_processed_data, cutOff + i, x_data_to_add, 0)
+                y_processed_data = np.insert(y_processed_data, cutOff + i, y_data_to_add, 0)
         else:
-            additional = block_size - cutOff
             x_processed_data = x_data[cutOff:, ]
+            y_processed_data = y_data[cutOff:, ]
             label = stats.mode(y_data[cutOff:]).mode[0]
             for i in range(cutOff):
                 x_data_to_add = x_data[block_size - 1]
-                x_processed_data = np.insert(x_processed_data, additional + i, x_data_to_add, 0)
+                y_data_to_add = y_data[block_size - 1]
+                x_processed_data = np.insert(x_processed_data, 0, x_data_to_add, 0)
+                y_processed_data = np.insert(y_processed_data, 0, y_data_to_add, 0)
+
+        cutOff = calculate_cutoff(y_processed_data, class_one)
+        if cutOff is not None:
+            print("Enhancement skipped")
+            return None, None
         return x_processed_data, label
 
     else:

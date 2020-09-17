@@ -261,13 +261,13 @@ def main(argv):
 
     problem = "Emotiv266"
     classifier_names = ["MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA_ResNet"]
-    epoch = 20
+    epoch = 5
     window_len = 40
     stride = 20
     binary = True
 
     # Data Version: ["" or "enhanced" or "trimmed"]
-    data_version = ""
+    data_version = "enhanced"
 
     # Command line args
     try:
