@@ -18,7 +18,8 @@ def build_model(input_shape):
         name='Multi-Head',
     )(lstm_layer)
 
-    gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(att_layer)
+    lstm_layer = keras.layers.LSTM(emotive_params, return_sequences=True)(att_layer)
+    gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(lstm_layer)
 
     # See architecture
     cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layerX))(main_input)
