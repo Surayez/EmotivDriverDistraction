@@ -17,7 +17,6 @@ def build_model(input_shape):
     )(lstm_layer)
 
     lstm_layer = keras.layers.LSTM(n_feature_maps, return_sequences=True)(att_layer)
-
     gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(lstm_layer)
 
     output_layer = keras.layers.Dense(n_feature_maps, activation='relu')(gap_layerX)

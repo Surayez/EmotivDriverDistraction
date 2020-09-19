@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 
 from utils import data_loader
-from utils.classifier_tools import prepare_inputs_deep_learning, prepare_inputs, prepare_inputs_cnn_lstm, \
-    prepare_inputs_attention
+from utils.classifier_tools import prepare_inputs_deep_learning, prepare_inputs, prepare_inputs_cnn_lstm
 from utils.tools import create_directory
 
 pd.set_option('display.max_rows', 500)
@@ -15,14 +14,21 @@ pd.set_option('display.max_columns', 500)
 __author__ = "Chang Wei Tan"
 
 
+def attention_models():
+    return ["attention", "SelfA", "MHA", "SA"]
+
+
+def lstm_models():
+    return ["lstm", "attention", "SelfA", "MHA"]
+
+
 def fit_classifier(epoch, all_labels, X_train, y_train, X_val=None, y_val=None):
     nb_classes = len(np.unique(all_labels))
 
-    if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or ("attention" in classifier_name):
+    if any(x in classifier_name for x in lstm_models()):
         input_shape = (None, X_train.shape[2], X_train.shape[3])
     else:
         input_shape = (X_train.shape[1], X_train.shape[2])
-
 
     classifier = create_classifier(classifier_name, input_shape, nb_classes, epoch)
     if X_val is None:
@@ -34,10 +40,7 @@ def fit_classifier(epoch, all_labels, X_train, y_train, X_val=None, y_val=None):
 
 
 def create_classifier(classifier_name, input_shape, nb_classes, epoch, verbose=True):
-    # if classifier_name == 'attention_trend':
-    #     from classifiers import attention_trend
-    #     return attention_trend.Classifier_Attention_Trend(output_directory, input_shape, verbose)
-    if "attention" in classifier_name:
+    if any(x in classifier_name for x in attention_models()):
         from classifiers import attention_classifier
         return attention_classifier.Classifier_Attention(classifier_name, output_directory, input_shape, epoch, verbose)
     if classifier_name == 'resnet':
@@ -67,7 +70,7 @@ cwd = os.getcwd()
 data_path = cwd + "/TS_Segmentation/"
 output_directory = cwd + "/output/"
 problem = "Emotiv266"
-classifier_name = "attention"
+classifier_name = "MHA"
 window_len = 40
 stride = 20
 binary = True
@@ -123,49 +126,24 @@ if classifier_name == "rocket":
     print(metrics.head())
 
 else:
-    if (classifier_name == "attention_trend"):
-        X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_attention(train_inputs=train_data,
+    if any(x in classifier_name for x in lstm_models()):
+        X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
                                                                                  test_inputs=test_data,
                                                                                  window_len=window_len,
                                                                                  stride=stride,
                                                                                  binary=binary)
     else:
-        if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or ("attention" in classifier_name):
-            X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
-                                                                                     test_inputs=test_data,
-                                                                                     window_len=window_len,
-                                                                                     stride=stride,
-                                                                                     binary=binary)
-        else:
-            X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_deep_learning(train_inputs=train_data,
-                                                                                          test_inputs=test_data,
-                                                                                          window_len=window_len,
-                                                                                          stride=stride,
-                                                                                          binary=binary)
+        X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_deep_learning(train_inputs=train_data,
+                                                                                      test_inputs=test_data,
+                                                                                      window_len=window_len,
+                                                                                      stride=stride,
+                                                                                      binary=binary)
 
     print("[Demo] Train series:", X_train.shape)
     if X_val is not None:
         print("[Demo] Val series:", X_val.shape)
     print("[Demo] Test series", X_test.shape)
 
-    #
-    # if (classifier_name == "attention_trend"):
-    #     # attn_classifier = fit_attn_classifier(X_train, y_train, X_val, y_val)
-    #
-    #     metrics_train, _ = attn_classifier.predict(X_train, y_train)
-    #     metrics_val, _ = attn_classifier.predict(X_val, y_val)
-    #     metrics_test, conf_mat = attn_classifier.predict(X_test, y_test)
-    #
-    #     metrics_train['train/val/test'] = 'train'
-    #     metrics_val['train/val/test'] = 'val'
-    #     metrics_test['train/val/test'] = 'test'
-    #
-    #     metrics = pd.concat([metrics_train, metrics_val, metrics_test]).reset_index(drop=True)
-    #
-    #     print(metrics.head())
-    #
-    #
-    # else:
     if y_val is not None:
         all_labels = np.concatenate((y_train, y_val, y_test), axis=0)
     else:
