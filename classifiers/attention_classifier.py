@@ -2,10 +2,15 @@ import time
 import keras
 from classifiers.classifiers import predict_model_deep_learning
 from utils.tools import save_logs
-from classifiers.attention_models import attention_model, attention_model_fcn, attention_model_resnet, \
-    attention_experiment, attention_model_bidirectional
+from classifiers.attention.attention_singular_models import MHSA_ResNet, MHSA_FCN, MHSA, SATTN
+from classifiers.attention.attention_models import ATTN_experiment, ATTN_ResNet, \
+    MHA_ResNet, SelfA_ResNet, MHA_FCN, MHA, \
+    ATTN_FCN, ATTN_BiDirectional_LSTM, SelfA_FCN
 
-__author__ = "Chang Wei Tan & Surayez Rahman"
+from keras_self_attention import SeqSelfAttention
+from keras_multi_head import MultiHeadAttention
+
+__author__ = "Surayez Rahman"
 
 
 class Classifier_Attention:
@@ -18,16 +23,33 @@ class Classifier_Attention:
         self.verbose = verbose
         self.output_directory = output_directory
 
-
         # UPDATE the following line to use desired model
-        if (classifier_name == "attention_bidirectional"):
-            self.model = attention_model_bidirectional.build_model(input_shape)
-        elif (classifier_name == "attention_resnet"):
-            self.model = attention_model_resnet.build_model(input_shape)
-        elif (classifier_name == "attention_fcn"):
-            self.model = attention_model_fcn.build_model(input_shape)
+        if classifier_name == "attention_bidirectional":
+            self.model = ATTN_BiDirectional_LSTM.build_model(input_shape)
+        elif classifier_name == "attention_resnet":
+            self.model = ATTN_ResNet.build_model(input_shape)
+        elif classifier_name == "attention_fcn":
+            self.model = ATTN_FCN.build_model(input_shape)
+        elif classifier_name == "SATTN":
+            self.model = SATTN.build_model(input_shape)
+        elif classifier_name == "MHA":
+            self.model = MHA.build_model(input_shape)
+        elif classifier_name == "MHSA":
+            self.model = MHSA.build_model(input_shape)
+        elif classifier_name == "MHSA_ResNet":
+            self.model = MHSA_ResNet.build_model(input_shape)
+        elif classifier_name == "MHSA_FCN":
+            self.model = MHSA_FCN.build_model(input_shape)
+        elif classifier_name == "SelfA_FCN":
+            self.model = SelfA_FCN.build_model(input_shape)
+        elif classifier_name == "SelfA_ResNet":
+            self.model = SelfA_ResNet.build_model(input_shape)
+        elif classifier_name == "MHA_FCN":
+            self.model = MHA_FCN.build_model(input_shape)
+        elif classifier_name == "MHA_ResNet":
+            self.model = MHA_ResNet.build_model(input_shape)
         else:
-            self.model = attention_model.build_model(input_shape)
+            self.model = ATTN_experiment.build_model(input_shape)
 
         if verbose:
             self.model.summary()
@@ -83,7 +105,10 @@ class Classifier_Attention:
         if self.verbose:
             print('[' + self.classifier_name + '] Predicting')
 
-        model = keras.models.load_model(self.output_directory + 'best_model.h5')
+        model = keras.models.load_model(self.output_directory + 'best_model.h5',
+                                        custom_objects={'MultiHeadAttention': MultiHeadAttention,
+                                                        'SeqSelfAttention': SeqSelfAttention
+                                                        })
 
         model_metrics, conf_mat, y_true, y_pred = predict_model_deep_learning(model, Ximg, yimg, self.output_directory)
         save_logs(self.output_directory, self.hist, y_pred, y_true, self.duration)

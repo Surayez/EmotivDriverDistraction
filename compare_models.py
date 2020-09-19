@@ -1,17 +1,26 @@
-import os
+import sys
+import getopt
 import csv
+import os
 import numpy as np
 import pandas as pd
-from plotly.offline import plot
+from matplotlib import pyplot as plt
 from utils import data_loader
-from utils.classifier_tools import prepare_inputs_deep_learning, prepare_inputs, prepare_inputs_cnn_lstm
+from utils.classifier_tools import prepare_inputs, prepare_inputs_combined
 from utils.tools import create_directory
-import plotly.graph_objs as go
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 
 __author__ = "Chang Wei Tan and Surayez Rahman"
+
+
+def attention_models():
+    return ["attention", "SelfA", "MHA", "SA"]
+
+
+def lstm_models():
+    return ["lstm", "attention", "SelfA", "MHA"]
 
 
 def results_table(classifier_names, train, test, val):
@@ -27,33 +36,49 @@ def results_table(classifier_names, train, test, val):
     table.close()
 
 
+def graph_label(rects):
+    # Ref: https://matplotlib.org/3.2.1/gallery/lines_bars_and_markers/barchart.html
+    for rect in rects:
+        height = rect.get_height()
+        plt.annotate('{}'.format(height),
+                     xy=(rect.get_x() + rect.get_width() / 2, height),
+                     xytext=(0, 3),  # 3 points vertical offset
+                     textcoords="offset points",
+                     ha='center', va='bottom')
+
+
 def results_chart(classifier_names, train, test, val):
-    # Create a results bar chart
-    trace1 = go.Bar(
-        x=classifier_names,
-        y=train,
-        name='Train')
+    train = list(np.around(np.array(train), 2))
+    test = list(np.around(np.array(test), 2))
+    val = list(np.around(np.array(val), 2))
 
-    trace2 = go.Bar(
-        x=classifier_names,
-        y=test,
-        name='Val')
+    N = len(classifier_names)
+    ind = np.arange(N)
+    width = 0.25
 
-    trace3 = go.Bar(
-        x=classifier_names,
-        y=val,
-        name='Test')
+    rects1 = plt.bar(ind, train, width, label='Train')
+    rects2 = plt.bar(ind + width, val, width, label='Val')
+    rects3 = plt.bar(ind + width * 2, test, width, label='Test')
 
-    data = [trace1, trace2, trace3]
-    layout = go.Layout(barmode='group')
-    fig = go.Figure(data=data, layout=layout)
-    plot(fig)
+    plt.ylabel('Scores')
+    plt.title('Scores by Train/Val/Test')
+
+    plt.xticks(ind + width / 2, classifier_names)
+    plt.legend(loc='best')
+
+    graph_label(rects1)
+    graph_label(rects2)
+    graph_label(rects3)
+
+    plt.savefig("result_bar.png")
+    plt.show()
+    plt.close()
 
 
 def fit_classifier(classifier_name, epoch, output_directory, all_labels, x_train, y_train, X_val=None, y_val=None):
     nb_classes = len(np.unique(all_labels))
 
-    if (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm") or ("attention" in classifier_name):
+    if any(x in classifier_name for x in lstm_models()):
         input_shape = (None, x_train.shape[2], x_train.shape[3])
     else:
         input_shape = (x_train.shape[1], x_train.shape[2])
@@ -68,7 +93,7 @@ def fit_classifier(classifier_name, epoch, output_directory, all_labels, x_train
 
 
 def create_classifier(classifier_name, output_directory, input_shape, nb_classes, epoch, verbose=True):
-    if "attention" in classifier_name:
+    if any(x in classifier_name for x in attention_models()):
         from classifiers import attention_classifier
         return attention_classifier.Classifier_Attention(classifier_name, output_directory, input_shape, epoch, verbose)
     if classifier_name == 'resnet':
@@ -162,7 +187,7 @@ def run_model(classifier_name, data, epoch, window_len, stride, binary):
     return metrics
 
 
-def prepare_data_cnn_lstm(window_len, stride, binary):
+def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
     # Set up output location
     cwd = os.getcwd()
     data_path = cwd + "/TS_Segmentation/"
@@ -189,22 +214,14 @@ def prepare_data_cnn_lstm(window_len, stride, binary):
     print("[Compare_Models] {} train series".format(len(train_data)))
     print("[Compare_Models] {} test series".format(len(test_data)))
 
-    X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
-                                                                             test_inputs=test_data,
+    dataset1, dataset2 = prepare_inputs_combined(train_inputs=train_data, test_inputs=test_data,
                                                                              window_len=window_len,
                                                                              stride=stride,
-                                                                             binary=binary)
+                                                                             binary=binary,
+                                                                             data_version=data_version)
 
-    #     X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_deep_learning(train_inputs=train_data,
-    #                                                                                   test_inputs=test_data,
-    #                                                                                   window_len=window_len,
-    #                                                                                   stride=stride,
-    #                                                                                   binary=binary)
-
-    print("[Compare_Models] Train series:", X_train.shape)
-    if X_val is not None:
-        print("[Compare_Models] Val series:", X_val.shape)
-    print("[Compare_Models] Test series", X_test.shape)
+    X_train, y_train, X_val, y_val, X_test, y_test = dataset1[0], dataset1[1], dataset1[2], dataset1[3], dataset1[4], dataset1[5]
+    X2_train, y2_train, X2_val, y2_val, X2_test, y2_test = dataset2[0], dataset2[1], dataset2[2], dataset2[3], dataset2[4], dataset2[5]
 
     if y_val is not None:
         all_labels = np.concatenate((y_train, y_val, y_test), axis=0)
@@ -218,16 +235,58 @@ def prepare_data_cnn_lstm(window_len, stride, binary):
     y_val = tmp[len(y_train):len(y_train) + len(y_val)]
     y_test = tmp[len(y_train) + len(y_val):]
 
-    return [all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory]
+    data_deep_learning = [all_labels, X_train, y_train, X_val, y_val, X_test, y_test, output_directory]
+
+    if y2_val is not None:
+        all_labels2 = np.concatenate((y2_train, y2_val, y2_test), axis=0)
+    else:
+        all_labels2 = np.concatenate((y2_train, y2_test), axis=0)
+    print("[Compare_Models] All labels 2: {}".format(np.unique(all_labels2)))
+
+    tmp2 = pd.get_dummies(all_labels2).values
+
+    y2_train = tmp2[:len(y2_train)]
+    y2_val = tmp2[len(y2_train):len(y2_train) + len(y2_val)]
+    y2_test = tmp2[len(y2_train) + len(y2_val):]
+
+    data_cnn_lstm = [all_labels2, X2_train, y2_train, X2_val, y2_val, X2_test, y2_test, output_directory]
+
+    return data_deep_learning, data_cnn_lstm
 
 
-if __name__ == "__main__":
+def main(argv):
+    # # For EmotivRaw:
+    # window_len = 512
+    # stride = 256
+
     problem = "Emotiv266"
-    classifier_names = ["attention_bidirectional", "attention_resnet", "attention_fcn", "resnet_lstm"]
-    epoch = 50
+    classifier_names = ["MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA", "MHA_ResNet", "resnet_lstm"]
+    epoch = 100
     window_len = 40
     stride = 20
     binary = True
+
+    # Data Version: ["" or "enhanced" or "trimmed"]
+    data_version = "enhanced"
+
+    # Command line args
+    try:
+        opts, args = getopt.getopt(argv, "p:c:e:", ["problem=", "classifier=", "epoch="])
+    except getopt.GetoptError:
+        print("Incorrect arguments passed")
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt in ("-p", "--problem"):
+            problem = arg
+        elif opt in ("-c", "--classifier"):
+            classifier = arg
+            classifier_names = classifier.split(',')
+        elif opt in ("-e", "--epoch"):
+            epoch = arg
+
+    # Print runtime information
+    print("Problem:", problem, "\nClassifiers:", classifier_names, "\nEpochs:", epoch)
 
     # Prepare results arrays
     result_train = []
@@ -235,10 +294,14 @@ if __name__ == "__main__":
     result_val = []
 
     # Prepare Data
-    data = prepare_data_cnn_lstm(window_len, stride, binary)
+    data_cnn_lstm, data_deep_learning = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version)
 
     for classifier_name in classifier_names:
         # Run each Model
+        if any(x in classifier_name for x in lstm_models()):
+            data = data_cnn_lstm
+        else:
+            data = data_deep_learning
         metrics = run_model(classifier_name, data, epoch, window_len, stride, binary)
         print(metrics.head())
 
@@ -248,3 +311,7 @@ if __name__ == "__main__":
 
     results_table(classifier_names, result_train, result_test, result_val)
     results_chart(classifier_names, result_train, result_test, result_val)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

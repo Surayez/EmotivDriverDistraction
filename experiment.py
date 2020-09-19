@@ -1,3 +1,4 @@
+import os
 import sys
 
 import numpy as np
@@ -11,6 +12,14 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 
 __author__ = "Chang Wei Tan"
+
+
+def attention_models():
+    return ["attention", "SelfA", "MHA", "SA"]
+
+
+def lstm_models():
+    return ["lstm", "attention", "SelfA", "MHA"]
 
 
 def get_window_stride(problem):
@@ -42,7 +51,7 @@ def get_window_stride(problem):
 def fit_classifier(all_labels, X_train, y_train, X_val=None, y_val=None):
     nb_classes = len(np.unique(all_labels))
 
-    if (classifier_name == "cnn_lstm") or (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm"):
+    if any(x in classifier_name for x in lstm_models()):
         input_shape = (None, X_train.shape[2], X_train.shape[3])
     else:
         input_shape = (X_train.shape[1], X_train.shape[2])
@@ -57,6 +66,9 @@ def fit_classifier(all_labels, X_train, y_train, X_val=None, y_val=None):
 
 
 def create_classifier(classifier_name, input_shape, nb_classes, output_directory, verbose=True):
+    if any(x in classifier_name for x in attention_models()):
+        from classifiers import attention_classifier
+        return attention_classifier.Classifier_Attention(classifier_name, output_directory, input_shape, epoch=1, verbose=True)
     if classifier_name == 'resnet':
         from classifiers import resnet
         return resnet.Classifier_ResNet(output_directory, input_shape, nb_classes, verbose)
@@ -127,7 +139,7 @@ def run_experiments():
         metrics = pd.concat([metrics_train, metrics_test]).reset_index(drop=True)
         print(metrics.head())
     else:
-        if (classifier_name == "cnn_lstm") or (classifier_name == "fcn_lstm") or (classifier_name == "resnet_lstm"):
+        if any(x in classifier_name for x in lstm_models()):
             X_train, y_train, X_val, y_val, X_test, y_test = prepare_inputs_cnn_lstm(train_inputs=train_data,
                                                                                      test_inputs=test_data,
                                                                                      window_len=window_len,
@@ -182,10 +194,11 @@ if len(sys.argv) >= 6:
     classifier_name = sys.argv[4]
     itr = sys.argv[5]
 else:
-    data_path = "C:/Users/changt/workspace/Dataset/TS_Segmentation/"
-    output_directory = 'C:/Users/changt/workspace/EmotivDriverDistraction/results/'
+    cwd = os.getcwd()
+    data_path = cwd + "/TS_Segmentation/"
+    output_directory = cwd + "/output/"
     problem = "Emotiv266"
-    classifier_name = "fcn_lstm"
+    classifier_name = "MHA"
     itr = "itr_0"
 
 output_directory = output_directory + classifier_name + '/' + problem + '/' + itr + '/'
