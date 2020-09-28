@@ -16,11 +16,11 @@ __author__ = "Chang Wei Tan and Surayez Rahman"
 
 
 def attention_models():
-    return ["attention", "SelfA", "MHA", "SA"]
+    return ["attention", "SelfA", "MHA", "SA", "ATTN"]
 
 
 def lstm_models():
-    return ["lstm", "attention", "SelfA", "MHA"]
+    return ["lstm", "attention", "SelfA", "MHA", "ATTN"]
 
 
 def results_table(classifier_names, train, test, val):
@@ -261,13 +261,14 @@ def main(argv):
 
     problem = "Emotiv266"
     classifier_names = ["MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA", "MHA_ResNet", "resnet_lstm"]
+    # classifier_names = ["resnet_lstm", "MHA_ResNet"]
     epoch = 100
     window_len = 40
     stride = 20
     binary = True
 
     # Data Version: ["" or "enhanced" or "trimmed"]
-    data_version = "enhanced"
+    data_version = ""
 
     # Command line args
     try:

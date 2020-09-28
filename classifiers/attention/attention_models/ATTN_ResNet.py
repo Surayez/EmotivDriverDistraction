@@ -133,7 +133,7 @@ def build_model(input_shape):
     print(out)
 
     model = keras.models.Model(inputs=main_input, outputs=out)
-    model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
+    # model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
     model.summary()
 
     return model

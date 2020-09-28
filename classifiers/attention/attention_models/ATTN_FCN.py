@@ -87,7 +87,7 @@ def build_model(input_shape):
     # gap_layer = keras.layers.GlobalAveragePooling1D()(out)
 
     model = keras.models.Model(inputs=main_input, outputs=out)
-    model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
+    # model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
     model.summary()
 
     return model
