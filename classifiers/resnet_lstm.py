@@ -155,7 +155,7 @@ class Classifier_ResNet_LSTM:
         ]
 
         # compile the model
-        self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer='adam', metrics=METRICS)
+        self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer='adam', metrics=['accuracy'])
 
         reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=50,
                                                       min_lr=0.0001)

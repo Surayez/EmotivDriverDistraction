@@ -77,7 +77,7 @@ class Classifier_Attention:
         mini_batch_size = int(min(Ximg_train.shape[0] / 10, batch_size))
 
         # self.model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
-        self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer=keras.optimizers.Adam(), metrics=METRICS)
+        self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
 
         file_path = self.output_directory + 'best_model.h5'
         if Ximg_val is not None:
