@@ -1,6 +1,7 @@
 import time
 
 import tensorflow.python.keras as keras
+from focal_loss import BinaryFocalLoss
 from tensorflow.python.keras import Model
 from tensorflow.python.keras.layers import Dropout, Dense, TimeDistributed, Flatten, LSTM, Input, GRU, Concatenate
 
@@ -142,8 +143,19 @@ class Classifier_ResNet_LSTM:
         batch_size = 16
         mini_batch_size = int(min(Ximg_train.shape[0] / 10, batch_size))
 
+        METRICS = [
+            keras.metrics.TruePositives(name='tp'),
+            keras.metrics.FalsePositives(name='fp'),
+            keras.metrics.TrueNegatives(name='tn'),
+            keras.metrics.FalseNegatives(name='fn'),
+            keras.metrics.BinaryAccuracy(name='accuracy'),
+            keras.metrics.Precision(name='precision'),
+            keras.metrics.Recall(name='recall'),
+            keras.metrics.AUC(name='auc'),
+        ]
+
         # compile the model
-        self.model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer='adam', metrics=METRICS)
 
         reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=50,
                                                       min_lr=0.0001)
