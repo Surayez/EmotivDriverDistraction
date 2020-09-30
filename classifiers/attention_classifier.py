@@ -81,8 +81,7 @@ class Classifier_Attention:
             # https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint
             reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=50,
                                                           min_lr=0.0001)
-            model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_accuracy', mode='max',
-                                                               save_best_only=True)
+            model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_loss', save_best_only=True)
         else:
             reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50,
                                                           min_lr=0.0001)
