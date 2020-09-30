@@ -262,7 +262,7 @@ def main(argv):
     problem = "Emotiv266"
     classifier_names = ["resnet_lstm", "MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA", "MHA_ResNet"]
     # classifier_names = ["resnet_lstm", "MHA_ResNet"]
-    epoch = 100
+    epoch = 10
     window_len = 40
     stride = 20
     binary = True
