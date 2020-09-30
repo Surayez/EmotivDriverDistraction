@@ -14,7 +14,7 @@ def build_model(input_shape):
     lstm_layer = keras.layers.LSTM(emotive_params, return_sequences=True)(input_layer)
 
     att_layer = MultiHeadAttention(
-        head_num=8,
+        head_num=14,
         name='Multi-Head',
     )(lstm_layer)
 
