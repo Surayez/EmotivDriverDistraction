@@ -151,14 +151,14 @@ class Classifier_ResNet_LSTM:
         ]
 
         # compile the model
-        # self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer=keras.optimizers.Adam(), metrics=METRICS)
-        self.model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer='adam', metrics=METRICS)
+        # self.model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
         reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=50,
                                                       min_lr=0.0001)
 
         file_path = self.output_directory + 'best_model.h5'
-        model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_loss',
+        model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_acc', mode='max',
                                                            save_best_only=True)
 
         self.callbacks = [reduce_lr, model_checkpoint]
