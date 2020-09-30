@@ -158,7 +158,7 @@ class Classifier_ResNet_LSTM:
                                                       min_lr=0.0001)
 
         file_path = self.output_directory + 'best_model.h5'
-        model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_accuracy', mode='max',
+        model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_auc', mode='max',
                                                            save_best_only=True)
 
         self.callbacks = [reduce_lr, model_checkpoint]
