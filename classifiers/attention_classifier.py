@@ -73,14 +73,15 @@ class Classifier_Attention:
         mini_batch_size = int(min(Ximg_train.shape[0] / 10, batch_size))
 
         # self.model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
-        self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer=keras.optimizers.Adam(), metrics=METRICS)
+        self.model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=METRICS)
+        # self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer=keras.optimizers.Adam(), metrics=METRICS)
 
         file_path = self.output_directory + 'best_model.h5'
         if Ximg_val is not None:
             # https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint
             reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=50,
                                                           min_lr=0.0001)
-            model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_auc', mode='max',
+            model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_accuracy', mode='max',
                                                                save_best_only=True)
         else:
             reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50,
