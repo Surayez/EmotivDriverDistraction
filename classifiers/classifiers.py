@@ -60,7 +60,6 @@ def predict_model_deep_learning_emotiv_binary(model, X, y):
     result_dic["precision_driving"] = []
     result_dic["recall_driving"] = []
     result_dic["f1_score_driving"] = []
-    result_dic["AUC"] = []
 
     y_true_distr, y_true_drive = get_binary_labels_softmax(y)
 
@@ -68,7 +67,6 @@ def predict_model_deep_learning_emotiv_binary(model, X, y):
 
     # calculate metrics
     result_dic["accuracy"].append(m.accuracy_score(y_true_distr, yhat_distr))
-    # result_dic["AUC"].append(m.auc(y_true_distr, yhat_distr))
     result_dic["precision_distracted"].append(m.precision_score(y_true_distr, yhat_distr))
     result_dic["recall_distracted"].append(m.recall_score(y_true_distr, yhat_distr))
     result_dic["f1_score_distracted"].append(m.f1_score(y_true_distr, yhat_distr))
