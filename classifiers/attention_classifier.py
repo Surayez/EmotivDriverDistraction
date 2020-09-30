@@ -60,13 +60,9 @@ class Classifier_Attention:
     def fit(self, Ximg_train, yimg_train, Ximg_val=None, yimg_val=None):
 
         METRICS = [
-            keras.metrics.TruePositives(name='tp'),
-            keras.metrics.FalsePositives(name='fp'),
-            keras.metrics.TrueNegatives(name='tn'),
-            keras.metrics.FalseNegatives(name='fn'),
             keras.metrics.BinaryAccuracy(name='accuracy'),
-            keras.metrics.Precision(name='precision'),
-            keras.metrics.Recall(name='recall'),
+            # keras.metrics.Precision(name='precision'),
+            # keras.metrics.Recall(name='recall'),
             keras.metrics.AUC(name='auc'),
         ]
 
@@ -76,8 +72,8 @@ class Classifier_Attention:
         batch_size = 16
         mini_batch_size = int(min(Ximg_train.shape[0] / 10, batch_size))
 
-        # self.model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
-        self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
+        self.model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
+        # self.model.compile(loss=BinaryFocalLoss(gamma=2), optimizer=keras.optimizers.Adam(), metrics=METRICS)
 
         file_path = self.output_directory + 'best_model.h5'
         if Ximg_val is not None:
