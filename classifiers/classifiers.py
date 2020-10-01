@@ -60,6 +60,8 @@ def predict_model_deep_learning_emotiv_binary(model, X, y):
     result_dic["precision_driving"] = []
     result_dic["recall_driving"] = []
     result_dic["f1_score_driving"] = []
+    result_dic["auc_distracted"] = []
+    result_dic["auc_driving"] = []
 
     y_true_distr, y_true_drive = get_binary_labels_softmax(y)
 
@@ -73,6 +75,8 @@ def predict_model_deep_learning_emotiv_binary(model, X, y):
     result_dic["precision_driving"].append(m.precision_score(y_true_drive, yhat_drive))
     result_dic["recall_driving"].append(m.recall_score(y_true_drive, yhat_drive))
     result_dic["f1_score_driving"].append(m.f1_score(y_true_drive, yhat_drive))
+    result_dic["auc_distracted"].append(m.roc_auc_score(y_true_distr, yhat_distr))
+    result_dic["auc_driving"].append(m.roc_auc_score(y_true_drive, yhat_drive))
 
     conf_mat = confusion_matrix(y_true_drive, yhat_drive)
     print(conf_mat)
@@ -113,6 +117,8 @@ def predict_model_emotiv_binary(model, X, y):
     result_dic["precision_driving"] = []
     result_dic["recall_driving"] = []
     result_dic["f1_score_driving"] = []
+    result_dic["auc_distracted"] = []
+    result_dic["auc_driving"] = []
 
     y_true_distr, y_true_drive = get_binary_labels(y)
     yhat_distr, yhat_drive = get_binary_labels(yhat)
@@ -125,6 +131,8 @@ def predict_model_emotiv_binary(model, X, y):
     result_dic["precision_driving"].append(m.precision_score(y_true_drive, yhat_drive))
     result_dic["recall_driving"].append(m.recall_score(y_true_drive, yhat_drive))
     result_dic["f1_score_driving"].append(m.f1_score(y_true_drive, yhat_drive))
+    result_dic["auc_distracted"].append(m.roc_auc_score(y_true_distr, yhat_distr))
+    result_dic["auc_driving"].append(m.roc_auc_score(y_true_drive, yhat_drive))
 
     conf_mat = confusion_matrix(y, yhat)
     print(conf_mat)

@@ -47,7 +47,7 @@ def graph_label(rects):
                      ha='center', va='bottom')
 
 
-def results_chart(classifier_names, train, test, val):
+def results_chart(classifier_names, train, test, val, type='accuracy'):
     train = list(np.around(np.array(train), 2))
     test = list(np.around(np.array(test), 2))
     val = list(np.around(np.array(val), 2))
@@ -60,7 +60,7 @@ def results_chart(classifier_names, train, test, val):
     rects2 = plt.bar(ind + width, val, width, label='Val')
     rects3 = plt.bar(ind + width * 2, test, width, label='Test')
 
-    plt.ylabel('Scores')
+    plt.ylabel(type + ' scores')
     plt.title('Scores by Train/Val/Test')
 
     plt.xticks(ind + width / 2, classifier_names)
@@ -70,7 +70,7 @@ def results_chart(classifier_names, train, test, val):
     graph_label(rects2)
     graph_label(rects3)
 
-    plt.savefig("result_bar.png")
+    plt.savefig(type + "_result_bar.png")
     plt.show()
     plt.close()
 
@@ -262,7 +262,7 @@ def main(argv):
     problem = "Emotiv266"
     classifier_names = ["resnet_lstm", "MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA", "MHA_ResNet"]
     # classifier_names = ["resnet_lstm", "MHA_ResNet"]
-    epoch = 10
+    epoch = 100
     window_len = 40
     stride = 20
     binary = True
@@ -293,6 +293,9 @@ def main(argv):
     result_train = []
     result_test = []
     result_val = []
+    auc_train = []
+    auc_test = []
+    auc_val = []
 
     # Prepare Data
     data_cnn_lstm, data_deep_learning = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version)
@@ -307,11 +310,15 @@ def main(argv):
         print(metrics.head())
 
         result_train.append(metrics["accuracy"].values[0] * 100)
+        auc_train.append(metrics["auc_distracted"].values[0] * 100)
         result_val.append(metrics["accuracy"].values[1] * 100)
+        auc_val.append(metrics["auc_distracted"].values[1] * 100)
         result_test.append(metrics["accuracy"].values[2] * 100)
+        auc_test.append(metrics["auc_distracted"].values[2] * 100)
 
     results_table(classifier_names, result_train, result_test, result_val)
-    results_chart(classifier_names, result_train, result_test, result_val)
+    results_chart(classifier_names, result_train, result_test, result_val, "accuracy")
+    results_chart(classifier_names, auc_train, auc_test, auc_val, "distracted_auc")
 
 
 if __name__ == "__main__":
