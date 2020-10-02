@@ -7,10 +7,10 @@ __author__ = "Surayez Rahman"
 
 
 def build_model(input_shape):
-    n_hidden = 100
+    n_hidden = 64
     output_shape = 2
 
-    input_train = keras.layers.Input(input_shape)
+    input_train = keras.layers.Input((input_shape[1], input_shape[2]))
     output_train = keras.layers.Input(output_shape)
 
     # ENCODER [Encodes input to hidden states]
@@ -29,7 +29,7 @@ def build_model(input_shape):
     print(encoder_last_c)
 
     # The last hidden state is repeated the number of time the output needs to be predicted
-    decoder_input = keras.layers.RepeatVector(output_train.shape[1])(encoder_last_h)
+    decoder_input = keras.layers.RepeatVector(output_train.shape[1]*2)(encoder_last_h)
     print(decoder_input)
 
     # DECODER [Decodes the last encoded hidden state to get alignment scoring]
@@ -57,19 +57,15 @@ def build_model(input_shape):
     gap_layer = keras.layers.GlobalAveragePooling1D()(context)
     print(gap_layer)
 
-    # out = keras.layers.TimeDistributed(keras.layers.Dense(output_train.shape[1]))(decoder_combined_context)
-    # print(out)
-
     out = keras.layers.Dense(output_train.shape[1])(gap_layer)
     print(out)
 
     model = keras.models.Model(inputs=input_train, outputs=out)
-    model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
     model.summary()
 
     return model
 
 
 if __name__ == "__main__":
-    input_shape = (40, 266)
+    input_shape = (None, 40, 266)
     attn_model = build_model(input_shape)

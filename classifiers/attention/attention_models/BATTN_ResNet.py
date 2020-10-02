@@ -96,9 +96,8 @@ def build_model(input_shape):
     print(encoder_last_h)
     print(encoder_last_c)
 
-    print("Number of decoders", output_train.shape[1] * 2)
     # The last hidden state is repeated the number of time the output needs to be predicted
-    decoder_input = keras.layers.RepeatVector(output_train.shape[1]* 2)(encoder_last_h)
+    decoder_input = keras.layers.RepeatVector(output_train.shape[1])(encoder_last_h)
     print(decoder_input)
 
     # DECODER [Decodes the last encoded hidden state to get alignment scoring]
@@ -128,6 +127,7 @@ def build_model(input_shape):
     print(out)
 
     model = keras.models.Model(inputs=main_input, outputs=out)
+    model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
     model.summary()
 
     return model

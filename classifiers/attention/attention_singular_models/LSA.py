@@ -2,42 +2,21 @@ import keras
 
 __author__ = "Surayez Rahman"
 
-# FCN code here are taken from https://github.com/hfawaz/dl-4-tsc. Attention code taken from:
+# Reference:
 # https://levelup.gitconnected.com/building-seq2seq-lstm-with-luong-attention-in-keras-for-time-series-forecasting-1ee00958decb
 
 
 def build_model(input_shape):
-    n_feature_maps = 64
-    main_input = keras.layers.Input(input_shape)
-    input_layer = keras.layers.Input((input_shape[1], input_shape[2]))
+    n_hidden = 64
+    output_shape = 2
 
-    conv1 = keras.layers.Conv1D(filters=128, kernel_size=8, padding='same')(input_layer)
-    conv1 = keras.layers.normalization.BatchNormalization()(conv1)
-    conv1 = keras.layers.Activation(activation='relu')(conv1)
-
-    conv2 = keras.layers.Conv1D(filters=256, kernel_size=5, padding='same')(conv1)
-    conv2 = keras.layers.normalization.BatchNormalization()(conv2)
-    conv2 = keras.layers.Activation('relu')(conv2)
-
-    conv3 = keras.layers.Conv1D(128, kernel_size=3, padding='same')(conv2)
-    conv3 = keras.layers.normalization.BatchNormalization()(conv3)
-    conv3 = keras.layers.Activation('relu')(conv3)
-
-    gap_layerX = keras.layers.GlobalAveragePooling1D()(conv3)
-    print(gap_layerX)
-
-    cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layerX))(main_input)
-    print(cnn_model)
-
-    # ATTENTION BLOCK STARTS
-
-    output_shape = (2)
+    input_train = keras.layers.Input(input_shape)
     output_train = keras.layers.Input(output_shape)
 
     # ENCODER [Encodes input to hidden states]
-    encoder_stack_h, encoder_last_h, encoder_last_c = keras.layers.LSTM(n_feature_maps, activation='relu',
+    encoder_stack_h, encoder_last_h, encoder_last_c = keras.layers.LSTM(n_hidden, activation='elu', dropout=0.2,
                                                                         return_state=True,
-                                                                        return_sequences=True)(cnn_model)
+                                                                        return_sequences=True)(input_train)
     # Returns hidden state stacks and last hidden states
     print(encoder_stack_h)
     print(encoder_last_h)
@@ -50,11 +29,11 @@ def build_model(input_shape):
     print(encoder_last_c)
 
     # The last hidden state is repeated the number of time the output needs to be predicted
-    decoder_input = keras.layers.RepeatVector(output_train.shape[1])(encoder_last_h)
+    decoder_input = keras.layers.RepeatVector(output_train.shape[1]*2)(encoder_last_h)
     print(decoder_input)
 
     # DECODER [Decodes the last encoded hidden state to get alignment scoring]
-    decoder_stack_h = keras.layers.LSTM(n_feature_maps, activation='relu',
+    decoder_stack_h = keras.layers.LSTM(n_hidden, activation='elu', dropout=0.2,
                                         return_state=False, return_sequences=True)(decoder_input,
                                                                                    initial_state=[encoder_last_h,
                                                                                                   encoder_last_c])
@@ -78,21 +57,15 @@ def build_model(input_shape):
     gap_layer = keras.layers.GlobalAveragePooling1D()(context)
     print(gap_layer)
 
-    # out = keras.layers.TimeDistributed(keras.layers.Dense(output_train.shape[1]))(decoder_combined_context)
-    # print(out)
-
     out = keras.layers.Dense(output_train.shape[1])(gap_layer)
     print(out)
 
-    # gap_layer = keras.layers.GlobalAveragePooling1D()(out)
-
-    model = keras.models.Model(inputs=main_input, outputs=out)
-    # model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
+    model = keras.models.Model(inputs=input_train, outputs=out)
     model.summary()
 
     return model
 
 
 if __name__ == "__main__":
-    input_shape = (None, 40, 266)
+    input_shape = (40, 266)
     attn_model = build_model(input_shape)

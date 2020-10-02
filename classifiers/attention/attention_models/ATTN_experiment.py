@@ -1,6 +1,10 @@
+
 import keras
+
 # from .attention_implements.MultiHeadAttention import MultiHeadAttention
 from keras_multi_head import MultiHeadAttention
+from tensorflow.keras.layers import Layer, Dense, LayerNormalization, Embedding, Dropout
+from classifiers.attention.attention_implements.PreProcessingLayer import PreProcessingLayer
 
 __author__ = "Surayez Rahman"
 
@@ -11,7 +15,9 @@ def build_model(input_shape):
     main_input = keras.layers.Input(input_shape)
     input_layer = keras.layers.Input((input_shape[1], input_shape[2]))
 
-    # add model layerss
+    # input_layer = PreProcessingLayer(266)(input_layer)
+    # print(input_layer)
+
     # BLOCK 1
     conv_x = keras.layers.Conv1D(filters=n_feature_maps,
                                  kernel_size=8,
@@ -99,12 +105,13 @@ def build_model(input_shape):
     cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layer))(main_input)
     print(cnn_model)
 
-    lstm_layer = keras.layers.Bidirectional(keras.layers.LSTM(n_feature_maps, return_sequences=True))(cnn_model)
-    # lstm_layer = keras.layers.LSTM(n_feature_maps, return_sequences=True)(cnn_model)
+    pos_enc = PreProcessingLayer()(cnn_model)
+    print(pos_enc)
 
-    att_layer = MultiHeadAttention(head_num=128)(lstm_layer)
-
-    lstm_layer = keras.layers.LSTM(128, return_sequences=True)(att_layer)
+    # lstm_layer = keras.layers.Bidirectional(keras.layers.LSTM(n_feature_maps, return_sequences=True))(cnn_model)
+    lstm_layer = keras.layers.LSTM(64, return_sequences=True)(pos_enc)
+    att_layer = MultiHeadAttention(head_num=16)(lstm_layer)
+    lstm_layer = keras.layers.LSTM(64, return_sequences=True)(att_layer)
 
     gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(lstm_layer)
 

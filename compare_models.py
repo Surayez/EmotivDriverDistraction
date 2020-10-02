@@ -260,9 +260,9 @@ def main(argv):
     # stride = 256
 
     problem = "Emotiv266"
-    classifier_names = ["resnet_lstm", "MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA", "MHA_ResNet"]
+    classifier_names = ["MHSA", "MHSA_FCN", "resnet_lstm", "MHSA_ResNet", "MHA", "MHA_ResNet", "SelfA"]
     # classifier_names = ["resnet_lstm", "MHA_ResNet"]
-    epoch = 100
+    epoch = 1
     window_len = 40
     stride = 20
     binary = True
