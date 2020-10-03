@@ -12,7 +12,7 @@ from utils.tools import create_directory
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 
-__author__ = "Chang Wei Tan and Surayez Rahman"
+__author__ = "Surayez Rahman"
 
 
 def attention_models():
@@ -260,9 +260,9 @@ def main(argv):
     # stride = 256
 
     problem = "Emotiv266"
-    classifier_names = ["MHSA", "MHSA_FCN", "resnet_lstm", "MHSA_ResNet", "MHA", "MHA_ResNet", "SelfA"]
-    # classifier_names = ["resnet_lstm", "MHA_ResNet"]
-    epoch = 1
+    classifier_names = ["fcn_lstm", "resnet_lstm", "MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA", "MHA_FCN", "MHA_ResNet", "SelfA_ResNet", "SelfA_FCN_Global", "SelfA_FCN"]
+    # classifier_names = ["SelfA_FCN_Global", "SelfA_FCN"]
+    epoch = 100
     window_len = 40
     stride = 20
     binary = True

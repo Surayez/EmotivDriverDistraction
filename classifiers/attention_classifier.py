@@ -6,7 +6,7 @@ from utils.tools import save_logs
 from classifiers.attention.attention_singular_models import MHSA_ResNet, MHSA_FCN, MHSA, LSA
 from classifiers.attention.attention_models import ATTN_experiment, LATTN_ResNet, \
     MHA_ResNet, SelfA_ResNet, MHA_FCN, MHA, \
-    LATTN_FCN, BATTN_ResNet, SelfA_FCN, LATTN, SelfA, BATTN_FCN
+    LATTN_FCN, BATTN_ResNet, SelfA_FCN, LATTN, SelfA, BATTN_FCN, SelfA_FCN_Global
 
 from keras_self_attention import SeqSelfAttention
 from keras_multi_head import MultiHeadAttention
@@ -50,6 +50,8 @@ class Classifier_Attention:
             self.model = SelfA.build_model(input_shape)
         elif classifier_name == "SelfA_FCN":
             self.model = SelfA_FCN.build_model(input_shape)
+        elif classifier_name == "SelfA_FCN_Global":
+            self.model = SelfA_FCN_Global.build_model(input_shape)
         elif classifier_name == "SelfA_ResNet":
             self.model = SelfA_ResNet.build_model(input_shape)
         elif classifier_name == "MHA_FCN":
