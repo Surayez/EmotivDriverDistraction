@@ -6,7 +6,7 @@ from classifiers.classifiers import predict_model_deep_learning
 from tensorflow.python.keras.layers import GRU, Concatenate
 from utils.tools import save_logs
 
-__author__ = "Chang Wei Tan and Surayez Rahman"
+__author__ = "Surayez Rahman"
 
 
 # Most of the code here are taken from https://github.com/hfawaz/dl-4-tsc
