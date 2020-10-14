@@ -147,7 +147,7 @@ def run_rocket(data, epoch, window_len, stride, binary):
     return metrics, conf_mat
 
 
-def run_deep_learning_models(classifier_name, data, epoch):
+def run_deep_learning_models(classifier_name, data, epoch, output_directory):
     all_labels = data[0]
     X_train = data[1]
     y_train = data[2]
@@ -155,7 +155,6 @@ def run_deep_learning_models(classifier_name, data, epoch):
     y_val = data[4]
     X_test = data[5]
     y_test = data[6]
-    output_directory = data[7]
 
     # Fit the classifier
     classifier = fit_classifier(classifier_name, epoch, output_directory, all_labels, X_train, y_train, X_val, y_val)
@@ -174,15 +173,14 @@ def run_deep_learning_models(classifier_name, data, epoch):
 
 
 def run_model(classifier_name, data, epoch, window_len, stride, binary, i):
-    data[7] = data[7] + classifier_name + "_" + str(i) + "/"
-    output_directory = data[7]
+    output_directory = data[7] + classifier_name + "_" + str(i) + "/"
     create_directory(output_directory)
 
     if classifier_name == "rocket":
         metrics, conf_mat = run_rocket(data, epoch, window_len, stride, binary)
 
     else:
-        metrics, conf_mat = run_deep_learning_models(classifier_name, data, epoch)
+        metrics, conf_mat = run_deep_learning_models(classifier_name, data, epoch, output_directory)
 
     metrics.to_csv(output_directory + 'classification_metrics.csv')
     np.savetxt(output_directory + 'confusion_matrix.csv', conf_mat, delimiter=",")
@@ -303,6 +301,7 @@ def main(argv):
 
     # Prepare Data
     data_cnn_lstm, data_deep_learning = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version)
+    output_dir = data_cnn_lstm[7]
 
     for classifier_name in classifier_names:
 
