@@ -174,7 +174,8 @@ def run_deep_learning_models(classifier_name, data, epoch):
 
 
 def run_model(classifier_name, data, epoch, window_len, stride, binary, i):
-    output_directory = data[7] + classifier_name + "_" + str(i) + "/"
+    data[7] = data[7] + classifier_name + "_" + str(i) + "/"
+    output_directory = data[7]
     create_directory(output_directory)
 
     if classifier_name == "rocket":
