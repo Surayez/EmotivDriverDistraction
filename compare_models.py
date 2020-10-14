@@ -173,8 +173,8 @@ def run_deep_learning_models(classifier_name, data, epoch):
     return metrics, conf_mat
 
 
-def run_model(classifier_name, data, epoch, window_len, stride, binary):
-    output_directory = data[7]
+def run_model(classifier_name, data, epoch, window_len, stride, binary, i):
+    output_directory = data[7] + "_" + str(i)
     if classifier_name == "rocket":
         metrics, conf_mat = run_rocket(data, epoch, window_len, stride, binary)
 
@@ -260,9 +260,10 @@ def main(argv):
     # stride = 256
 
     problem = "Emotiv266"
-    classifier_names = ["fcn_lstm", "resnet_lstm", "MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA", "MHA_FCN", "MHA_ResNet", "SelfA_ResNet", "SelfA_FCN_Global", "SelfA_FCN"]
-    # classifier_names = ["SelfA_FCN_Global", "SelfA_FCN"]
-    epoch = 100
+    # classifier_names = ["fcn_lstm", "resnet_lstm", "MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA", "MHA_FCN", "MHA_ResNet", "SelfA_ResNet", "SelfA_FCN_Global", "SelfA_FCN"]
+    classifier_names = ["fcn_lstm", "resnet_lstm"]
+    epoch = 1
+    iter = 1
     window_len = 40
     stride = 20
     binary = True
@@ -272,7 +273,7 @@ def main(argv):
 
     # Command line args
     try:
-        opts, args = getopt.getopt(argv, "p:c:e:", ["problem=", "classifier=", "epoch="])
+        opts, args = getopt.getopt(argv, "p:c:i:", ["problem=", "classifier=", "iteration="])
     except getopt.GetoptError:
         print("Incorrect arguments passed")
         sys.exit(2)
@@ -282,12 +283,12 @@ def main(argv):
             problem = arg
         elif opt in ("-c", "--classifier"):
             classifier = arg
-            classifier_names = classifier.split(',')
-        elif opt in ("-e", "--epoch"):
-            epoch = arg
+            classifier_names = [classifier]
+        elif opt in ("-i", "--iteration"):
+            iter = arg
 
     # Print runtime information
-    print("Problem:", problem, "\nClassifiers:", classifier_names, "\nEpochs:", epoch)
+    print("Problem:", problem, "\nClassifiers:", classifier_names, "\nIterations:", iter)
 
     # Prepare results arrays
     result_train = []
@@ -301,13 +302,15 @@ def main(argv):
     data_cnn_lstm, data_deep_learning = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version)
 
     for classifier_name in classifier_names:
-        # Run each Model
-        if any(x in classifier_name for x in lstm_models()):
-            data = data_cnn_lstm
-        else:
-            data = data_deep_learning
-        metrics = run_model(classifier_name, data, epoch, window_len, stride, binary)
-        print(metrics.head())
+
+        for i in range(iter):
+            # Run each Model
+            if any(x in classifier_name for x in lstm_models()):
+                data = data_cnn_lstm
+            else:
+                data = data_deep_learning
+            metrics = run_model(classifier_name, data, epoch, window_len, stride, binary, i)
+            print(metrics.head())
 
         result_train.append(metrics["accuracy"].values[0] * 100)
         auc_train.append(metrics["auc_distracted"].values[0] * 100)
@@ -323,3 +326,6 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+
+
+# python run
