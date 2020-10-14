@@ -303,7 +303,7 @@ def main(argv):
 
     for classifier_name in classifier_names:
 
-        for i in range(iter):
+        for i in range(int(iter)):
             # Run each Model
             if any(x in classifier_name for x in lstm_models()):
                 data = data_cnn_lstm
