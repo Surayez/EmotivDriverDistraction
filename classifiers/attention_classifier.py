@@ -5,7 +5,7 @@ from focal_loss import BinaryFocalLoss
 from utils.tools import save_logs
 from classifiers.attention.attention_singular_models import MHSA_ResNet, MHSA_FCN, MHSA, LSA
 from classifiers.attention.attention_models import ATTN_experiment, LATTN_ResNet, \
-    MHA_ResNet, SelfA_ResNet, MHA_FCN, MHA, \
+    MHA_ResNet, SelfA_ResNet, MHA_FCN, MHA, SelfA_FCN_Multiplicative, \
     LATTN_FCN, BATTN_ResNet, SelfA_FCN, LATTN, SelfA, BATTN_FCN, SelfA_FCN_Global
 
 from keras_self_attention import SeqSelfAttention
@@ -52,6 +52,8 @@ class Classifier_Attention:
             self.model = SelfA_FCN.build_model(input_shape)
         elif classifier_name == "SelfA_FCN_Global":
             self.model = SelfA_FCN_Global.build_model(input_shape)
+        elif classifier_name == "SelfA_FCN_Multiplicative":
+            self.model = SelfA_FCN_Multiplicative.build_model(input_shape)
         elif classifier_name == "SelfA_ResNet":
             self.model = SelfA_ResNet.build_model(input_shape)
         elif classifier_name == "MHA_FCN":
