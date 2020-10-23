@@ -49,3 +49,4 @@ Werkzeug==1.0.1
 wrapt==1.12.1
 imblearn==0.0
 focal-loss==0.0.6
+numba==0.51.2
