@@ -188,7 +188,7 @@ def run_model(classifier_name, data, epoch, window_len, stride, binary, i):
     return metrics
 
 
-def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
+def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version, upsampled):
     # Set up output location
     cwd = os.getcwd()
     data_path = cwd + "/TS_Segmentation/"
@@ -219,7 +219,8 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version):
                                                                              window_len=window_len,
                                                                              stride=stride,
                                                                              binary=binary,
-                                                                             data_version=data_version)
+                                                                             data_version=data_version,
+                                                                             upsampled = upsampled)
 
     X_train, y_train, X_val, y_val, X_test, y_test = dataset1[0], dataset1[1], dataset1[2], dataset1[3], dataset1[4], dataset1[5]
     X2_train, y2_train, X2_val, y2_val, X2_test, y2_test = dataset2[0], dataset2[1], dataset2[2], dataset2[3], dataset2[4], dataset2[5]
@@ -267,6 +268,7 @@ def main(argv):
     iter = 1
     window_len = 40
     stride = 20
+    upsampled = True
     binary = True
 
     # Data Version: ["" or "enhanced" or "trimmed"]
@@ -300,7 +302,7 @@ def main(argv):
     auc_val = []
 
     # Prepare Data
-    data_cnn_lstm, data_deep_learning = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version)
+    data_cnn_lstm, data_deep_learning = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version, upsampled)
     output_dir = data_cnn_lstm[7]
 
     for classifier_name in classifier_names:

@@ -300,7 +300,7 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
 
 def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
                             val_size=2, random_state=1234, n_subs=4, binary=True, class_one=None, verbose=1,
-                            data_version=""):
+                            data_version="", upsampled=True):
     # This function prepare the inputs to have the right shape for deep learning attention_models specifically CNN-LSTM attention_models.
     # The idea is to get n_subs subsequences of length=window_len, pass each of them to a CNN for features and
     # learn the relationship with past subsequences using LSTM.
@@ -350,7 +350,9 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
                                                        window_size=larger_window,
                                                        stride=stride,
                                                        binary=binary,
-                                                       class_one=class_one)
+                                                       class_one=class_one,
+                                                       # norm=False
+                                                       )
         [X_train.append(x) for x in subsequences]
         [y_train.append(x) for x in sub_label]
 
@@ -358,7 +360,9 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
     y_train = np.array(y_train)
 
     # Up-sampling data
-    X_train, y_train = up_sample(X_train, y_train)
+    if upsampled == True:
+        X_train, y_train = up_sample(X_train, y_train)
+
     X_train = X_train.reshape((X_train.shape[0], n_subs, n_length, X_train.shape[2]))
 
     X_val = []
@@ -402,7 +406,8 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
                                                                                  binary=binary, data_version=data_version)
 
     # Up-sampling data
-    X2_train, y2_train = up_sample(X2_train, y2_train)
+    if upsampled == True:
+        X2_train, y2_train = up_sample(X2_train, y2_train)
 
     dataset2 = [X2_train, y2_train, X2_val, y2_val, X2_test, y2_test]
 
