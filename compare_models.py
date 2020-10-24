@@ -188,7 +188,7 @@ def run_model(classifier_name, data, epoch, window_len, stride, binary, i):
     return metrics
 
 
-def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version, upsampled, norm):
+def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version, upsampled, norm, segmentation_norm):
     # Set up output location
     cwd = os.getcwd()
     data_path = cwd + "/TS_Segmentation/"
@@ -210,8 +210,8 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version, ups
     train_file = data_folder + problem + "_TRAIN.csv"
     test_file = data_folder + problem + "_TEST.csv"
 
-    train_data = data_loader.load_segmentation_data(train_file)
-    test_data = data_loader.load_segmentation_data(test_file)
+    train_data = data_loader.load_segmentation_data(train_file, norm=segmentation_norm)
+    test_data = data_loader.load_segmentation_data(test_file, norm=segmentation_norm)
     print("[Compare_Models] {} train series".format(len(train_data)))
     print("[Compare_Models] {} test series".format(len(test_data)))
 
@@ -269,7 +269,8 @@ def main(argv):
     window_len = 40
     stride = 20
     upsampled = True
-    norm = True
+    extraction_norm = True
+    segmentation_norm = True
     binary = True
 
     # Data Version: ["" or "enhanced" or "trimmed"]
@@ -304,7 +305,7 @@ def main(argv):
 
     # Prepare Data
     data_cnn_lstm, data_deep_learning = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version,
-                                                              upsampled, norm)
+                                                              upsampled, extraction_norm, segmentation_norm)
     output_dir = data_cnn_lstm[7]
 
     for classifier_name in classifier_names:

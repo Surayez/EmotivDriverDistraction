@@ -190,7 +190,8 @@ def prepare_inputs_deep_learning(train_inputs, test_inputs, window_len=40, strid
                                                        window_size=window_len,
                                                        stride=stride,
                                                        binary=binary,
-                                                       class_one=class_one)
+                                                       class_one=class_one,
+                                                       norm=norm)
         [X_test.append(x) for x in subsequences]
         [y_test.append(x) for x in sub_label]
     X_test = np.array(X_test)
@@ -393,7 +394,8 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
                                                        window_size=larger_window,
                                                        stride=stride,
                                                        binary=binary,
-                                                       class_one=class_one)
+                                                       class_one=class_one,
+                                                       norm = norm)
         [X_test.append(x) for x in subsequences]
         [y_test.append(x) for x in sub_label]
     X_test = np.array(X_test)
@@ -407,7 +409,7 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
                                                                                  window_len=window_len,
                                                                                  stride=stride,
                                                                                  binary=binary, data_version=data_version,
-                                                                                    norm=norm)
+                                                                                 norm=norm)
 
     # Up-sampling data
     if upsampled == True:
