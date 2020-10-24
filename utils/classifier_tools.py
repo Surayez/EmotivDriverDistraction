@@ -111,7 +111,7 @@ def prepare_inputs_attention(train_inputs, test_inputs, window_len=40, stride=20
 
 
 def prepare_inputs_deep_learning(train_inputs, test_inputs, window_len=40, stride=20,
-                                 val_size=2, random_state=1234, binary=True, class_one=None, verbose=1, data_version=""):
+                                 val_size=2, random_state=1234, binary=True, class_one=None, verbose=1, data_version="", norm=True):
     # This function prepare the inputs to have the right shape for deep learning attention_models.
     # The shape we are after is (n_series, series_len, series_dim)
     # Inputs are df with data and label columns
@@ -154,7 +154,8 @@ def prepare_inputs_deep_learning(train_inputs, test_inputs, window_len=40, strid
                                                            window_size=window_len,
                                                            stride=stride,
                                                            binary=binary,
-                                                           class_one=class_one)
+                                                           class_one=class_one,
+                                                           norm=norm)
         [X_train.append(x) for x in subsequences]
         [y_train.append(x) for x in sub_label]
     X_train = np.array(X_train)
@@ -173,7 +174,8 @@ def prepare_inputs_deep_learning(train_inputs, test_inputs, window_len=40, strid
                                                            window_size=window_len,
                                                            stride=stride,
                                                            binary=binary,
-                                                           class_one=class_one)
+                                                           class_one=class_one,
+                                                           norm=norm)
             [X_val.append(x) for x in subsequences]
             [y_val.append(x) for x in sub_label]
         X_val = np.array(X_val)
@@ -300,7 +302,7 @@ def prepare_inputs_cnn_lstm(train_inputs, test_inputs, window_len=40, stride=20,
 
 def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
                             val_size=2, random_state=1234, n_subs=4, binary=True, class_one=None, verbose=1,
-                            data_version="", upsampled=True):
+                            data_version="", upsampled=True, norm=True):
     # This function prepare the inputs to have the right shape for deep learning attention_models specifically CNN-LSTM attention_models.
     # The idea is to get n_subs subsequences of length=window_len, pass each of them to a CNN for features and
     # learn the relationship with past subsequences using LSTM.
@@ -351,7 +353,7 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
                                                        stride=stride,
                                                        binary=binary,
                                                        class_one=class_one,
-                                                       # norm=False
+                                                       norm=norm
                                                        )
         [X_train.append(x) for x in subsequences]
         [y_train.append(x) for x in sub_label]
@@ -374,7 +376,8 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
                                                        window_size=larger_window,
                                                        stride=stride,
                                                        binary=binary,
-                                                       class_one=class_one)
+                                                       class_one=class_one,
+                                                       norm=norm)
         [X_val.append(x) for x in subsequences]
         [y_val.append(x) for x in sub_label]
     X_val = np.array(X_val)
@@ -403,7 +406,8 @@ def prepare_inputs_combined(train_inputs, test_inputs, window_len=40, stride=20,
                                                                                  test_inputs=test_inputs,
                                                                                  window_len=window_len,
                                                                                  stride=stride,
-                                                                                 binary=binary, data_version=data_version)
+                                                                                 binary=binary, data_version=data_version,
+                                                                                    norm=norm)
 
     # Up-sampling data
     if upsampled == True:

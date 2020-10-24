@@ -188,7 +188,7 @@ def run_model(classifier_name, data, epoch, window_len, stride, binary, i):
     return metrics
 
 
-def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version, upsampled):
+def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version, upsampled, norm):
     # Set up output location
     cwd = os.getcwd()
     data_path = cwd + "/TS_Segmentation/"
@@ -220,7 +220,7 @@ def prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version, ups
                                                                              stride=stride,
                                                                              binary=binary,
                                                                              data_version=data_version,
-                                                                             upsampled = upsampled)
+                                                                             upsampled = upsampled, norm=norm)
 
     X_train, y_train, X_val, y_val, X_test, y_test = dataset1[0], dataset1[1], dataset1[2], dataset1[3], dataset1[4], dataset1[5]
     X2_train, y2_train, X2_val, y2_val, X2_test, y2_test = dataset2[0], dataset2[1], dataset2[2], dataset2[3], dataset2[4], dataset2[5]
@@ -263,12 +263,13 @@ def main(argv):
 
     problem = "Emotiv266"
     # classifier_names = ["fcn_lstm", "resnet_lstm", "MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA", "MHA_FCN", "MHA_ResNet", "SelfA_ResNet", "SelfA_FCN_Global", "SelfA_FCN"]
-    classifier_names = ["fcn_lstm", "resnet_lstm"]
-    epoch = 1
+    classifier_names = ["fcn", "fcn_lstm", "SelfA_FCN", "MHA_FCN"]
+    epoch = 100
     iter = 1
     window_len = 40
     stride = 20
     upsampled = True
+    norm = True
     binary = True
 
     # Data Version: ["" or "enhanced" or "trimmed"]
@@ -302,7 +303,8 @@ def main(argv):
     auc_val = []
 
     # Prepare Data
-    data_cnn_lstm, data_deep_learning = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version, upsampled)
+    data_cnn_lstm, data_deep_learning = prepare_data_cnn_lstm(problem, window_len, stride, binary, data_version,
+                                                              upsampled, norm)
     output_dir = data_cnn_lstm[7]
 
     for classifier_name in classifier_names:
