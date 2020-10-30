@@ -13,10 +13,14 @@ def build_model(input_shape):
     input_layer = keras.layers.Input((input_shape[1], input_shape[2]))
 
     lstm_layer = keras.layers.LSTM(emotive_params, return_sequences=True)(input_layer)
+    print(lstm_layer)
 
     self_attention = SeqSelfAttention(attention_width=40, attention_activation='sigmoid', name='Attention')(lstm_layer)
+    print(self_attention)
 
     lstm_layer = keras.layers.LSTM(emotive_params, return_sequences=True)(self_attention)
+    print(lstm_layer)
+
     gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(lstm_layer)
 
     # See architecture

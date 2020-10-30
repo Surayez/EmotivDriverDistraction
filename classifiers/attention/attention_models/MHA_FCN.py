@@ -1,5 +1,6 @@
 import keras
-from classifiers.attention.attention_implements.MultiHeadAttention import MultiHeadAttention
+# from classifiers.attention.attention_implements.MultiHeadAttention import MultiHeadAttention
+from keras_multi_head import MultiHeadAttention
 
 __author__ = "Surayez Rahman"
 
@@ -26,8 +27,13 @@ def build_model(input_shape):
     cnn_model = keras.layers.TimeDistributed(keras.models.Model(inputs=input_layer, outputs=gap_layer))(main_input)
 
     lstm_layer = keras.layers.LSTM(64, return_sequences=True)(cnn_model)
+    print(lstm_layer)
+
     att_layer = MultiHeadAttention(head_num=8)(lstm_layer)
+    print(att_layer)
+
     lstm_layer = keras.layers.LSTM(64, return_sequences=True)(att_layer)
+    print(lstm_layer)
 
     gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(lstm_layer)
 
