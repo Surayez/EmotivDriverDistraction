@@ -31,7 +31,9 @@ def build_model(input_shape):
 
     self_attention = SeqSelfAttention(attention_width=input_shape[1], attention_activation='sigmoid', name='Attention',
                                       attention_type=SeqSelfAttention.ATTENTION_TYPE_MUL)(lstm_layer)
-    gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(self_attention)
+    lstm_layer = keras.layers.LSTM(64, return_sequences=True)(self_attention)
+
+    gap_layerX = keras.layers.pooling.GlobalAveragePooling1D()(lstm_layer)
 
     output_layer = keras.layers.Dense(64, activation='relu')(gap_layerX)
     output_layer = keras.layers.Dense(2, activation='softmax')(output_layer)
