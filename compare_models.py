@@ -263,9 +263,8 @@ def main(argv):
 
     problem = "Emotiv266"
     # classifier_names = ["fcn_lstm", "resnet_lstm", "MHSA", "MHSA_FCN", "MHSA_ResNet", "MHA", "MHA_FCN", "MHA_ResNet", "SelfA_ResNet", "SelfA_FCN_Global", "SelfA_FCN"]
-    classifier_names = ["fcn", "fcn_lstm", "SelfA_FCN", "MHA_FCN"]
     epoch = 100
-    iter = 1
+    iter = 5
     window_len = 40
     stride = 20
     upsampled = True
